@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Fond vert -->
+  <rect width="200" height="200" fill="#2D6A4F"/>
+  
+  <!-- Cercle décoratif orange -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="#FF6B35" stroke-width="8"/>
+  
+  <!-- Initiales SK -->
+  <text x="100" y="115" 
+        font-family="'Playfair Display', serif" 
+        font-size="80" 
+        font-weight="700" 
+        fill="#FF6B35" 
+        text-anchor="middle"
+        dominant-baseline="middle">SK</text>
+  
+  <!-- Texte Saveur Kaolack -->
+  <text x="100" y="160" 
+        font-family="'Poppins', sans-serif" 
+        font-size="14" 
+        font-weight="400" 
+        fill="#ffffff" 
+        text-anchor="middle"
+        letter-spacing="2">SAVEUR KAOLACK</text>
+</svg>

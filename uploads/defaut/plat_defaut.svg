@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Fond beige clair -->
+  <rect width="400" height="300" fill="#F5F1E8"/>
+  
+  <!-- Cercle décoratif -->
+  <circle cx="200" cy="150" r="120" fill="#2D6A4F" opacity="0.1"/>
+  
+  <!-- Assiette -->
+  <ellipse cx="200" cy="160" rx="100" ry="60" fill="#ffffff" stroke="#2D6A4F" stroke-width="3"/>
+  <ellipse cx="200" cy="160" rx="70" ry="40" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Couvert - Fourchette -->
+  <rect x="130" y="100" width="8" height="80" rx="4" fill="#2D6A4F"/>
+  <rect x="128" y="95" width="12" height="15" rx="2" fill="#2D6A4F"/>
+  
+  <!-- Couvert - Couteau -->
+  <rect x="262" y="100" width="8" height="80" rx="4" fill="#2D6A4F"/>
+  <rect x="260" y="95" width="12" height="20" rx="2" fill="#2D6A4F"/>
+  
+  <!-- Nourriture stylisée -->
+  <circle cx="185" cy="150" r="15" fill="#FF6B35" opacity="0.8"/>
+  <circle cx="200" cy="145" r="12" fill="#FF6B35" opacity="0.6"/>
+  <circle cx="215" cy="155" r="14" fill="#FF6B35" opacity="0.7"/>
+  <circle cx="195" cy="165" r="10" fill="#FF6B35" opacity="0.5"/>
+  
+  <!-- Texte -->
+  <text x="200" y="260" 
+        font-family="'Poppins', sans-serif" 
+        font-size="16" 
+        font-weight="400" 
+        fill="#2D6A4F" 
+        text-anchor="middle">Plat Saveur Kaolack</text>
+</svg>

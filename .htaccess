@@ -1,0 +1,30 @@
+# Activer le moteur de réécriture
+# RewriteEngine On
+
+# Base du répertoire
+# RewriteBase /saveur-php/
+
+# Ne pas réécrire les fichiers et dossiers existants
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+
+# Réécrire les URLs sans extension .php
+# RewriteRule ^([^/]+)/?$ $1.php [L]
+
+# Page 404 personnalisée
+ErrorDocument 404 /saveur-php/404.php
+
+# Activer la compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json
+</IfModule>
+
+# Cache navigateur
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>

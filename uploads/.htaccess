@@ -1,0 +1,37 @@
+# =====================================================
+# SÉCURITÉ DOSSIER UPLOADS
+# Saveur Kaolack
+# =====================================================
+
+# Désactiver l'exécution de scripts PHP
+<FilesMatch "\.(php|php\.|php3|php4|phtml|pl|py|jsp|asp|sh|cgi)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Empêcher l'accès aux fichiers .htaccess
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Ne pas afficher le contenu des dossiers
+Options -Indexes
+
+# Autoriser uniquement l'affichage des images
+<IfModule mod_mime.c>
+    AddType image/jpeg .jpg .jpeg
+    AddType image/png .png
+    AddType image/gif .gif
+    AddType image/webp .webp
+</IfModule>
+
+# Forcer le traitement en tant qu'image uniquement
+<FilesMatch "\.(?i:jpe?g|png|gif|webp)$">
+    ForceType image/jpeg
+</FilesMatch>
+
+# Headers de sécurité
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
