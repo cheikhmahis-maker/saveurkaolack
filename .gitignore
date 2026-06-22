@@ -1,0 +1,25 @@
+# ─── Dumps & sauvegardes BDD ─────────────────────────────────────────────────
+*.sql
+!database/seed_data.sql
+!database/create_avis_table.sql
+
+# ─── Secrets et configuration sensible ───────────────────────────────────────
+includes/secrets.php
+
+# ─── Uploads utilisateurs ────────────────────────────────────────────────────
+uploads/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ─── Environnement & dépendances ─────────────────────────────────────────────
+.env
+vendor/
+node_modules/
+
+# ─── OS & éditeurs ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
