@@ -12,21 +12,27 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 }
 
 require_once '../includes/config.php';
+require_once '../includes/db.php';
 
 $commandes = [];
 $stats = ['total' => 0, 'en_attente' => 0, 'livree' => 0, 'annulee' => 0];
 $erreur = '';
 
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // Stats
-    $stats['total'] = $pdo->query("SELECT COUNT(*) FROM commandes")->fetchColumn();
-    $stats['en_attente'] = $pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'en_attente'")->fetchColumn();
-    $stats['livree'] = $pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'livree'")->fetchColumn();
-    $stats['annulee'] = $pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'annulee'")->fetchColumn();
-    
+    $pdo = getDB();
+
+    // Stats en une seule requête
+    $rows = $pdo->query("SELECT statut, COUNT(*) as total FROM commandes GROUP BY statut")
+                ->fetchAll(PDO::FETCH_ASSOC);
+
+    $stats['total'] = 0;
+    foreach ($rows as $row) {
+        $stats['total'] += $row['total'];
+        if (isset($stats[$row['statut']])) {
+            $stats[$row['statut']] = (int) $row['total'];
+        }
+    }
+
     // Commandes avec details
     $stmt = $pdo->query("
         SELECT c.id, c.total, c.statut, c.created_at,
@@ -38,9 +44,10 @@ try {
         LIMIT 50
     ");
     $commandes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
 } catch (PDOException $e) {
-    $erreur = 'Erreur BDD : ' . $e->getMessage();
+    error_log('Erreur commandes admin: ' . $e->getMessage());
+    $erreur = 'Une erreur technique est survenue.';
 }
 
 $pageTitle = 'Gestion Commandes';
@@ -48,7 +55,7 @@ require_once '../includes/header.php';
 
 $nb_restos_attente = 0;
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
+    $pdo = getDB();
     $nb_restos_attente = $pdo->query("SELECT COUNT(*) FROM restaurants WHERE statut = 'en_attente'")->fetchColumn();
 } catch (PDOException $e) {}
 ?>

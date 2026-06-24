@@ -141,6 +141,10 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const message = input.value.trim();
         if (!message) return;
+        if (message.length > 300) {
+            addMessage("Votre message est trop long (max 300 caractères). ✂️", 'bot');
+            return;
+        }
         
         // Afficher message utilisateur
         addMessage(message, 'user');
@@ -241,7 +245,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let formatted = escapeHtml(text);
         formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-[hsl(14_72%_46%)] hover:underline">$1</a>');
+        formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, texte, url) => {
+            const urlSafe = url.startsWith('/') || url.startsWith('http') ? url : '#';
+            return `<a href="${urlSafe}" class="text-[hsl(14_72%_46%)] hover:underline">${texte}</a>`;
+        });
         return formatted;
     }
     

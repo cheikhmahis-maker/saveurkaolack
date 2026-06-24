@@ -12,6 +12,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once '../../includes/config.php';
+require_once '../../includes/db.php';
+require_once '../../includes/fonctions.php';
+
 // Vérifier que l'utilisateur est admin
 if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
     http_response_code(403);
@@ -26,6 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// Vérifier le token CSRF
+if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Erreur de sécurité. Rechargez la page.']);
+    exit();
+}
+
 // Récupérer les paramètres
 $restaurant_id = isset($_POST['restaurant_id']) ? intval($_POST['restaurant_id']) : 0;
 $action = isset($_POST['action']) ? $_POST['action'] : '';
@@ -37,9 +48,7 @@ if ($restaurant_id <= 0 || !in_array($action, ['valider', 'rejeter'])) {
 }
 
 try {
-    // Connexion BDD
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     // Vérifier que le restaurant existe et est en attente
     $stmt = $pdo->prepare("SELECT id, nom, statut FROM restaurants WHERE id = ?");
@@ -100,6 +109,7 @@ try {
     ]);
     
 } catch (PDOException $e) {
+    error_log('Erreur valider_restaurant: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Erreur BDD : ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Une erreur technique est survenue.']);
 }

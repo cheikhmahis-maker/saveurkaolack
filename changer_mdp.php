@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once 'includes/config.php';
+require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 // Vérifier connexion (tous rôles : client, restaurant, admin)
@@ -25,8 +26,7 @@ $erreur = '';
 
 // Connexion BDD
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     // TRAITEMENT DU FORMULAIRE
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -73,7 +73,8 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    error_log('Erreur changer_mdp: ' . $e->getMessage());
+    $erreur = 'Une erreur technique est survenue. Veuillez réessayer.';
 }
 
 $pageTitle = 'Changer mon mot de passe';

@@ -20,6 +20,14 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
+// Restaurer depuis le cookie si la session a expiré (ex: client qui revient après connexion)
+if (empty($_SESSION['cart']) && !empty($_COOKIE['saveur_cart'])) {
+    $cart_cookie = json_decode($_COOKIE['saveur_cart'], true);
+    if (is_array($cart_cookie) && !empty($cart_cookie)) {
+        $_SESSION['cart'] = $cart_cookie;
+    }
+}
+
 // Connexion BDD pour récupérer les infos des plats
 $pdo = getDB();
 
@@ -69,19 +77,23 @@ if (isset($_GET['add'])) {
             ];
         }
     }
+    setcookie('saveur_cart', json_encode($_SESSION['cart']), time() + 86400, '/');
     header('Location: panier.php');
     exit;
 }
 
 // Modifier quantité
 if (isset($_GET['update']) && isset($_GET['qty'])) {
-    $platId = (int)$_GET['update'];
-    $quantite = (int)$_GET['qty'];
-    if ($quantite <= 0) {
-        unset($_SESSION['cart'][$platId]);
-    } else {
-        $_SESSION['cart'][$platId]['quantite'] = $quantite;
+    $platId   = (int) $_GET['update'];
+    $quantite = (int) $_GET['qty'];
+    if (isset($_SESSION['cart'][$platId])) {
+        if ($quantite <= 0) {
+            unset($_SESSION['cart'][$platId]);
+        } else {
+            $_SESSION['cart'][$platId]['quantite'] = $quantite;
+        }
     }
+    setcookie('saveur_cart', json_encode($_SESSION['cart']), time() + 86400, '/');
     header('Location: panier.php');
     exit;
 }
@@ -90,6 +102,7 @@ if (isset($_GET['update']) && isset($_GET['qty'])) {
 if (isset($_GET['remove'])) {
     $platId = (int)$_GET['remove'];
     unset($_SESSION['cart'][$platId]);
+    setcookie('saveur_cart', json_encode($_SESSION['cart']), time() + 86400, '/');
     header('Location: panier.php');
     exit;
 }
@@ -97,6 +110,7 @@ if (isset($_GET['remove'])) {
 // Vider le panier
 if (isset($_GET['clear'])) {
     $_SESSION['cart'] = [];
+    setcookie('saveur_cart', '', time() - 3600, '/');
     header('Location: panier.php');
     exit;
 }
@@ -161,10 +175,10 @@ if (isset($_SESSION['flash_message'])) {
             </div>
             <div class="flex-1">
                 <h3 class="font-display text-lg font-bold text-blue-900 mb-2">
-                    <?php echo $flashMessage['titre']; ?>
+                    <?php echo htmlspecialchars($flashMessage['titre'], ENT_QUOTES, 'UTF-8'); ?>
                 </h3>
                 <p class="text-blue-800 leading-relaxed">
-                    <?php echo $flashMessage['message']; ?>
+                    <?php echo htmlspecialchars($flashMessage['message'], ENT_QUOTES, 'UTF-8'); ?>
                 </p>
                 <div class="mt-4 flex gap-3">
                     <a href="restaurants.php" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
@@ -336,14 +350,14 @@ if (isset($_SESSION['flash_message'])) {
                     </button>
                     <?php endif; ?>
                 <?php else: ?>
-                    <!-- Pas connecté : connexion obligatoire -->
+                    <!-- Invité sans compte : commander directement -->
                     <?php if ($minAtteint): ?>
-                    <a href="connexion.php?redirect=panier&message=connectez_vous_pour_commander" 
+                    <a href="checkout.php"
                        class="flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-warm text-[hsl(38_60%_97%)] text-base font-medium shadow-warm hover:opacity-90 transition-opacity">
                         <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
-                        Se connecter pour commander
+                        Commander maintenant
                     </a>
                     <?php else: ?>
                     <button disabled
@@ -351,10 +365,12 @@ if (isset($_SESSION['flash_message'])) {
                         Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
                     </button>
                     <?php endif; ?>
-                    
+
                     <p class="text-center text-xs text-[hsl(25_15%_42%)]">
-                        <span class="text-[hsl(14_72%_46%)]">✓</span> Créez un compte pour suivre vos commandes<br>
-                        <a href="connexion.php?tab=signup&redirect=panier" class="text-[hsl(14_72%_46%)] hover:underline">Créer un compte</a>
+                        <a href="connexion.php?redirect=panier" class="text-[hsl(14_72%_46%)] hover:underline font-medium">Se connecter</a>
+                        ou
+                        <a href="connexion.php?tab=signup&redirect=panier" class="text-[hsl(14_72%_46%)] hover:underline font-medium">créer un compte</a>
+                        pour suivre vos commandes
                     </p>
                 <?php endif; ?>
             </div>
@@ -374,5 +390,32 @@ if (isset($_SESSION['flash_message'])) {
     </div>
     <?php endif; ?>
 </section>
+
+<?php if (!empty($items)): ?>
+<?php $barMinAtteint = !$restaurant || $subtotal >= ($restaurant['commande_minimum'] ?? 0); ?>
+<!-- Barre fixe mobile : total + bouton Commander (masquée sur desktop) -->
+<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[hsl(30_25%_86%)] px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <div class="flex items-center gap-4">
+        <div class="shrink-0">
+            <div class="text-xs text-[hsl(25_15%_42%)]">Total</div>
+            <div class="font-display text-xl font-bold text-[hsl(14_72%_46%)]">
+                <?php echo number_format($total, 0, ',', ' '); ?> F
+            </div>
+        </div>
+        <?php if ($barMinAtteint): ?>
+        <a href="checkout.php"
+           class="flex flex-1 h-12 items-center justify-center rounded-2xl bg-gradient-warm text-[hsl(38_60%_97%)] font-semibold shadow-warm">
+            Commander →
+        </a>
+        <?php else: ?>
+        <div class="flex flex-1 h-12 items-center justify-center rounded-2xl bg-[hsl(30_25%_86%)] text-[hsl(25_15%_42%)] font-medium text-sm cursor-not-allowed">
+            Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+<!-- Espace pour éviter que la barre fixe cache le contenu du bas -->
+<div class="lg:hidden h-20"></div>
+<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>

@@ -337,8 +337,7 @@ function alerte(string $type, string $message): string {
  */
 function estRestaurantOuvert(string $heureOuverture, string $heureFermeture): bool {
     $now = new DateTime();
-    $currentTime = $now->format('H:i');
-    
+
     // Convertir en minutes pour comparaison facile
     $currentMinutes = (int)$now->format('H') * 60 + (int)$now->format('i');
     
@@ -620,7 +619,7 @@ function envoyerEmailConfirmation(string $emailDestinataire, string $prenom, str
     }
     
     // URL de suivi
-    $urlSuivi = "http://" . $_SERVER['HTTP_HOST'] . "/saveur-php/suivi.php?token=" . urlencode($numeroTracking);
+    $urlSuivi = BASE_URL . "suivi.php?token=" . urlencode($numeroTracking);
     
     // Sujet
     $sujet = "Confirmation commande #{$numeroTracking} - Saveur Kaolack";
@@ -689,26 +688,25 @@ HTML;
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
             
-            $mail = new PHPMailer\PHPMailer(true);
+            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
             $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'saveurkaolack@gmail.com'; // TODO: Remplacer par votre email
-            $mail->Password = 'votre_mot_de_passe_app'; // TODO: Remplacer par le mot de passe d'application
-            $mail->SMTPSecure = PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = 587;
-            $mail->CharSet = 'UTF-8';
-            
-            $mail->setFrom('saveurkaolack@gmail.com', 'Saveur Kaolack');
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
+            $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
+            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            $mail->CharSet    = 'UTF-8';
+
+            $mail->setFrom(defined('SMTP_EMAIL') ? SMTP_EMAIL : 'noreply@saveurkaolack.sn', 'Saveur Kaolack');
             $mail->addAddress($emailDestinataire);
             $mail->Subject = $sujet;
             $mail->Body = $messageHtml;
             $mail->AltBody = $messageTexte;
             $mail->isHTML(true);
-            
+
             return $mail->send();
-        } catch (Exception $e) {
-            // Échec silencieux - ne pas bloquer la commande
+        } catch (PHPMailer\PHPMailer\Exception $e) {
             error_log("Erreur envoi email : " . $e->getMessage());
             return false;
         }
@@ -739,24 +737,24 @@ function envoyerEmailSimple(string $destinataire, string $sujet, string $message
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
             
-            $mail = new PHPMailer\PHPMailer(true);
+            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
             $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'saveurkaolack@gmail.com'; // TODO: Remplacer par votre email
-            $mail->Password = 'votre_mot_de_passe_app'; // TODO: Remplacer par le mot de passe d'application
-            $mail->SMTPSecure = PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = 587;
-            $mail->CharSet = 'UTF-8';
-            
-            $mail->setFrom('saveurkaolack@gmail.com', 'Saveur Kaolack');
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
+            $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
+            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            $mail->CharSet    = 'UTF-8';
+
+            $mail->setFrom(defined('SMTP_EMAIL') ? SMTP_EMAIL : 'noreply@saveurkaolack.sn', 'Saveur Kaolack');
             $mail->addAddress($destinataire);
             $mail->Subject = $sujet;
             $mail->Body = $messageHtml;
             $mail->isHTML(true);
-            
+
             return $mail->send();
-        } catch (Exception $e) {
+        } catch (PHPMailer\PHPMailer\Exception $e) {
             error_log("Erreur envoi email simple : " . $e->getMessage());
         }
     }

@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/config.php';
+require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Plats';
@@ -11,8 +12,7 @@ $dishes = [];
 
 // Connexion BDD
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     // Récupérer les catégories
     $stmt = $pdo->query("SELECT DISTINCT categorie FROM plats WHERE disponible = 1 ORDER BY categorie");

@@ -19,7 +19,7 @@ if (!empty($_SESSION['id'])) {
             header('Location: index.php');
             break;
         case 'restaurant':
-            header('Location: index.php');
+            header('Location: dashboard_resto.php');
             break;
         case 'admin':
             header('Location: admin/index.php');
@@ -35,8 +35,9 @@ $erreur = '';
 $succes = '';
 
 // Gérer le paramètre de redirection depuis l'URL
-if (!empty($_GET['redirect'])) {
-    $_SESSION['redirect_after_login'] = $_GET['redirect'] === 'panier' ? 'panier.php' : ($_GET['redirect'] === 'checkout' ? 'checkout.php' : $_GET['redirect']);
+$redirectAutorise = ['panier' => 'panier.php', 'checkout' => 'checkout.php'];
+if (!empty($_GET['redirect']) && isset($redirectAutorise[$_GET['redirect']])) {
+    $_SESSION['redirect_after_login'] = $redirectAutorise[$_GET['redirect']];
 }
 
 // Déterminer l'onglet actif (connexion ou inscription)
@@ -46,112 +47,90 @@ $activeTab = isset($_GET['tab']) ? $_GET['tab'] : 'signin';
 // TRAITEMENT DU FORMULAIRE DE CONNEXION
 // ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'connexion') {
-    // Récupération et nettoyage des données
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-    $password = isset($_POST['password']) ? $_POST['password'] : '';
-    
-    // Rate limiting : Vérifier les tentatives échouées récentes
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $rateLimitKey = 'login_attempts_' . md5($ip . $email);
+    $email    = isset($_POST['email'])    ? trim($_POST['email'])  : '';
+    $password = isset($_POST['password']) ? $_POST['password']     : '';
+    $ip       = $_SERVER['REMOTE_ADDR']  ?? 'unknown';
+
     $maxAttempts = 5;
-    $lockoutTime = 15 * 60; // 15 minutes
-    
-    if (isset($_SESSION[$rateLimitKey])) {
-        $attempts = $_SESSION[$rateLimitKey];
-        if ($attempts['count'] >= $maxAttempts && (time() - $attempts['first_attempt']) < $lockoutTime) {
-            $remainingTime = ceil(($lockoutTime - (time() - $attempts['first_attempt'])) / 60);
-            $erreur = "Trop de tentatives échouées. Réessayez dans {$remainingTime} minutes.";
-        }
-    }
-    
-    // Validation basique
+    $lockoutTime = 15 * 60; // 15 minutes en secondes
+
     if (empty($email) || empty($password)) {
         $erreur = 'Veuillez remplir tous les champs.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $erreur = 'Adresse email invalide.';
-    } elseif (isset($erreur) && strpos($erreur, 'Trop de tentatives') === 0) {
-        // Erreur déjà définie par rate limiting
     } elseif (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
         $erreur = 'Erreur de sécurité : session invalide. Veuillez réessayer.';
     } else {
-        // Connexion à la base de données via PDO
         try {
             $pdo = getDB();
-            
-            // Requête préparée pour récupérer l'utilisateur par email
-            $stmt = $pdo->prepare("SELECT id, nom, prenom, email, password, role FROM utilisateurs WHERE email = :email LIMIT 1");
-            $stmt->execute([':email' => $email]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Vérification du mot de passe
-            if ($user && password_verify($password, $user['password'])) {
-                // ========================================================
-                // CONNEXION RÉUSSIE - Réinitialiser le compteur de tentatives
-                // ========================================================
-                unset($_SESSION[$rateLimitKey]);
-                
-                // ========================================================
-                // CONNEXION RÉUSSIE - Stockage des informations en session
-                // ========================================================
-                $_SESSION['id'] = $user['id'];
-                $_SESSION['nom'] = $user['nom'];
-                $_SESSION['prenom'] = $user['prenom'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['derniere_activite'] = time();
-                
-                // ========================================================
-                // RÉGÉNÉRATION DE SESSION (protection fixation de session)
-                // ========================================================
-                session_regenerate_id(true);
-                
-                // ========================================================
-                // REDIRECTION INTELLIGENTE
-                // ========================================================
-                // Si l'utilisateur venait d'une page protégée, y retourner
-                if (!empty($_SESSION['redirect_after_login'])) {
-                    $redirect = $_SESSION['redirect_after_login'];
-                    unset($_SESSION['redirect_after_login']);
-                    header('Location: ' . $redirect);
-                    exit();
-                }
-                
-                // Sinon redirection selon le rôle
-                switch ($user['role']) {
-                    case 'client':
-                        header('Location: index.php');
-                        break;
-                    case 'restaurant':
-                        header('Location: dashboard_resto.php');
-                        break;
-                    case 'admin':
-                        header('Location: admin/index.php');
-                        break;
-                    default:
-                        header('Location: index.php');
-                }
-                exit();
-                
+
+            // Nettoyer les anciennes tentatives (plus de 15 min)
+            $pdo->prepare("DELETE FROM login_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)")
+                ->execute();
+
+            // Compter les tentatives récentes pour cette IP + email
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM login_attempts WHERE ip = ? AND email = ?");
+            $stmt->execute([$ip, $email]);
+            $nbTentatives = (int) $stmt->fetchColumn();
+
+            if ($nbTentatives >= $maxAttempts) {
+                // Calculer le temps restant
+                $stmt = $pdo->prepare("SELECT TIMESTAMPDIFF(SECOND, MIN(created_at), NOW()) FROM login_attempts WHERE ip = ? AND email = ?");
+                $stmt->execute([$ip, $email]);
+                $secondesEcoulees = (int) $stmt->fetchColumn();
+                $minutesRestantes = ceil(($lockoutTime - $secondesEcoulees) / 60);
+                $erreur = "Trop de tentatives échouées. Réessayez dans {$minutesRestantes} minute(s).";
             } else {
-                // Incrémenter le compteur de tentatives échouées
-                if (!isset($_SESSION[$rateLimitKey])) {
-                    $_SESSION[$rateLimitKey] = ['count' => 0, 'first_attempt' => time()];
-                }
-                $_SESSION[$rateLimitKey]['count']++;
-                
-                $remainingAttempts = $maxAttempts - $_SESSION[$rateLimitKey]['count'];
-                if ($remainingAttempts > 0) {
-                    $erreur = "Email ou mot de passe incorrect. Il vous reste {$remainingAttempts} tentative(s).";
+                $stmt = $pdo->prepare("SELECT id, nom, prenom, email, password, role FROM utilisateurs WHERE email = :email LIMIT 1");
+                $stmt->execute([':email' => $email]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user && password_verify($password, $user['password'])) {
+                    // Connexion réussie — effacer les tentatives en BDD
+                    $pdo->prepare("DELETE FROM login_attempts WHERE ip = ? AND email = ?")
+                        ->execute([$ip, $email]);
+
+                    $_SESSION['id']                = $user['id'];
+                    $_SESSION['nom']               = $user['nom'];
+                    $_SESSION['prenom']            = $user['prenom'];
+                    $_SESSION['email']             = $user['email'];
+                    $_SESSION['role']              = $user['role'];
+                    $_SESSION['derniere_activite'] = time();
+
+                    session_regenerate_id(true);
+
+                    if (!empty($_SESSION['redirect_after_login'])) {
+                        $redirect = $_SESSION['redirect_after_login'];
+                        unset($_SESSION['redirect_after_login']);
+                        header('Location: ' . $redirect);
+                        exit();
+                    }
+
+                    switch ($user['role']) {
+                        case 'client':     header('Location: index.php');          break;
+                        case 'restaurant': header('Location: dashboard_resto.php'); break;
+                        case 'admin':      header('Location: admin/index.php');     break;
+                        default:           header('Location: index.php');
+                    }
+                    exit();
+
                 } else {
-                    $erreur = "Trop de tentatives échouées. Réessayez dans 15 minutes.";
+                    // Mauvais mot de passe — enregistrer la tentative en BDD
+                    $pdo->prepare("INSERT INTO login_attempts (ip, email) VALUES (?, ?)")
+                        ->execute([$ip, $email]);
+
+                    $restantes = $maxAttempts - ($nbTentatives + 1);
+                    if ($restantes > 0) {
+                        $erreur = "Email ou mot de passe incorrect. Il vous reste {$restantes} tentative(s).";
+                    } else {
+                        $erreur = "Trop de tentatives échouées. Réessayez dans 15 minutes.";
+                    }
                 }
             }
-            
+
         } catch (PDOException $e) {
-            // Mode développement : afficher l'erreur pour debug
-            // En production, remplacer par : $erreur = 'Une erreur technique est survenue.';
-            $erreur = 'Erreur DB : ' . $e->getMessage();
             error_log('Erreur connexion: ' . $e->getMessage());
+            $erreur = 'Une erreur technique est survenue. Veuillez réessayer.';
         }
     }
 }
@@ -212,9 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
             
         } catch (PDOException $e) {
-            // Mode développement : afficher l'erreur pour debug
-            $erreur = 'Erreur DB : ' . $e->getMessage();
             error_log('Erreur inscription: ' . $e->getMessage());
+            $erreur = 'Une erreur technique est survenue. Veuillez réessayer.';
         }
     }
 }

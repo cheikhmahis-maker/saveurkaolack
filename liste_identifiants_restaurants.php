@@ -2,9 +2,11 @@
 /**
  * Liste des identifiants restaurants pour présentation
  */
+require_once 'includes/config.php';
+require_once 'includes/db.php';
+
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     echo "<h2>IDENTIFIANTS RESTAURANTS</h2>";
     echo "<table border='1' cellpadding='10' style='border-collapse: collapse;'>";

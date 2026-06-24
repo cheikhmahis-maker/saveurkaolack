@@ -13,6 +13,7 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 }
 
 require_once '../includes/config.php';
+require_once '../includes/db.php';
 
 // Initialiser variables
 $restaurants = [];
@@ -23,8 +24,7 @@ $succes = '';
 
 // Connexion BDD
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     // Compteurs
     $nb_restos_attente = $pdo->query("SELECT COUNT(*) FROM restaurants WHERE statut = 'en_attente'")->fetchColumn();
@@ -254,19 +254,21 @@ $date_jour = date('d/m/Y');
 <script src="../assets/js/dashboard_admin.js"></script>
 
 <script>
+const CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+
 // ─── CHANGER STATUT RESTAURANT (ACTIVER/SUSPENDRE) ───
 function changerStatut(restaurantId, nouveauStatut) {
     const action = nouveauStatut === 'actif' ? 'activer' : 'suspendre';
     const message = action === 'activer'
-        ? 'Activer ce restaurant ?' 
+        ? 'Activer ce restaurant ?'
         : 'Suspendre ce restaurant ? Il ne sera plus visible.';
-    
+
     if (!confirm(message)) return;
-    
+
     fetch('ajax/restaurant_action.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=${action}&id=${restaurantId}`
+        body: `action=${action}&id=${restaurantId}&csrf_token=${encodeURIComponent(CSRF_TOKEN)}`
     })
     .then(r => r.text())
     .then(text => {
@@ -299,7 +301,7 @@ function supprimerRestaurant(restaurantId, nomRestaurant) {
     fetch('ajax/restaurant_action.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `action=supprimer&id=${restaurantId}`
+        body: `action=supprimer&id=${restaurantId}&csrf_token=${encodeURIComponent(CSRF_TOKEN)}`
     })
     .then(r => r.text())
     .then(text => {

@@ -5,6 +5,7 @@
 
 session_start();
 require_once 'includes/config.php';
+require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Mot de passe oublié';
@@ -15,12 +16,30 @@ $succes = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
     $email = trim($_POST['email'] ?? '');
     
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $cleRateLimit = 'reset_mdp_' . md5($ip);
+    $maxTentatives = 3;
+    $delaiLockout = 15 * 60;
+
+    if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
+        $erreur = 'Requête invalide. Veuillez réessayer.';
+    } elseif (
+        isset($_SESSION[$cleRateLimit]) &&
+        $_SESSION[$cleRateLimit]['count'] >= $maxTentatives &&
+        (time() - $_SESSION[$cleRateLimit]['debut']) < $delaiLockout
+    ) {
+        $minutesRestantes = ceil(($delaiLockout - (time() - $_SESSION[$cleRateLimit]['debut'])) / 60);
+        $erreur = "Trop de demandes. Réessayez dans {$minutesRestantes} minute(s).";
+    } elseif (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $erreur = 'Veuillez entrer une adresse email valide.';
     } else {
+        // Incrémenter le compteur (reset si la fenêtre de 15 min est expirée)
+        if (!isset($_SESSION[$cleRateLimit]) || (time() - $_SESSION[$cleRateLimit]['debut']) >= $delaiLockout) {
+            $_SESSION[$cleRateLimit] = ['count' => 0, 'debut' => time()];
+        }
+        $_SESSION[$cleRateLimit]['count']++;
         try {
-            $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo = getDB();
             
             // Vérifier si l'email existe
             $stmt = $pdo->prepare("SELECT id, nom, prenom FROM utilisateurs WHERE email = ? LIMIT 1");
@@ -41,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
                 $stmt->execute([$email, $token, $expires, $token, $expires]);
                 
                 // Envoyer l'email de réinitialisation
-                $resetUrl = "http://" . $_SERVER['HTTP_HOST'] . "/saveur-php/reinitialiser_mdp.php?token=" . urlencode($token);
+                $resetUrl = BASE_URL . "reinitialiser_mdp.php?token=" . urlencode($token);
                 
                 $sujet = "Réinitialisation de votre mot de passe - Saveur Kaolack";
                 $messageHtml = <<<HTML

@@ -5,6 +5,7 @@
 
 session_start();
 require_once 'includes/config.php';
+require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Réinitialiser le mot de passe';
@@ -17,8 +18,7 @@ $tokenValide = false;
 // Vérifier le token
 if (!empty($token)) {
     try {
-        $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo = getDB();
         
         // Chercher le token non expiré
         $stmt = $pdo->prepare("
@@ -46,10 +46,12 @@ if (!empty($token)) {
 if ($tokenValide && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
     $password = $_POST['password'] ?? '';
     $passwordConfirm = $_POST['password_confirm'] ?? '';
-    
+
     // Validation
-    if (strlen($password) < 6) {
-        $erreur = 'Le mot de passe doit contenir au moins 6 caractères.';
+    if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
+        $erreur = 'Requête invalide. Veuillez réessayer.';
+    } elseif (strlen($password) < 8) {
+        $erreur = 'Le mot de passe doit contenir au moins 8 caractères.';
     } elseif ($password !== $passwordConfirm) {
         $erreur = 'Les mots de passe ne correspondent pas.';
     } else {
@@ -127,21 +129,21 @@ require_once 'includes/header.php';
                                id="password" 
                                name="password" 
                                required
-                               minlength="6"
-                               class="mt-1.5 h-11 w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20" 
+                               minlength="8"
+                               class="mt-1.5 h-11 w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20"
                                placeholder="••••••••">
-                        <p class="mt-1 text-xs text-[hsl(25_15%_42%)]">Minimum 6 caractères</p>
+                        <p class="mt-1 text-xs text-[hsl(25_15%_42%)]">Minimum 8 caractères</p>
                     </div>
-                    
+
                     <div>
                         <label for="password_confirm" class="block text-sm font-medium text-[hsl(20_30%_14%)]">
                             Confirmer le mot de passe
                         </label>
-                        <input type="password" 
-                               id="password_confirm" 
-                               name="password_confirm" 
+                        <input type="password"
+                               id="password_confirm"
+                               name="password_confirm"
                                required
-                               minlength="6"
+                               minlength="8"
                                class="mt-1.5 h-11 w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20" 
                                placeholder="••••••••">
                     </div>

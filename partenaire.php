@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/config.php';
+require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 $pageTitle = 'Devenir partenaire';
 
@@ -14,24 +15,25 @@ $message = '';
 $erreur = '';
 
 // Traitement du formulaire
-if (isset($_GET['sent']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    $nom = trim($_GET['resto'] ?? '');
-    $proprietaire = trim($_GET['owner'] ?? '');
-    $telephone = trim($_GET['phone'] ?? '');
-    $email = trim($_GET['email'] ?? '');
-    $adresse = trim($_GET['addr'] ?? '');
-    $quartier = trim($_GET['quartier'] ?? 'Centre ville');
-    $description = trim($_GET['msg'] ?? '');
-    
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nom         = trim($_POST['resto']    ?? '');
+    $proprietaire = trim($_POST['owner']   ?? '');
+    $telephone   = trim($_POST['phone']    ?? '');
+    $email       = trim($_POST['email']    ?? '');
+    $adresse     = trim($_POST['addr']     ?? '');
+    $quartier    = trim($_POST['quartier'] ?? 'Centre ville');
+    $description = trim($_POST['msg']      ?? '');
+
     // Validation
-    if (empty($nom) || empty($proprietaire) || empty($telephone) || empty($email) || empty($adresse)) {
+    if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
+        $erreur = "Erreur de sécurité. Veuillez réessayer.";
+    } elseif (empty($nom) || empty($proprietaire) || empty($telephone) || empty($email) || empty($adresse)) {
         $erreur = "Veuillez remplir tous les champs obligatoires.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $erreur = "L'adresse email n'est pas valide.";
     } else {
         try {
-            $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo = getDB();
             
             // Vérifier si l'email existe déjà
             $stmt = $pdo->prepare("SELECT id FROM restaurants WHERE email = ?");
@@ -56,7 +58,8 @@ if (isset($_GET['sent']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
                 $message = "Demande envoyée avec succès ! L'équipe va étudier votre demande.";
             }
         } catch (PDOException $e) {
-            $erreur = "Erreur lors de l'enregistrement : " . $e->getMessage();
+            error_log('Erreur partenaire: ' . $e->getMessage());
+            $erreur = 'Une erreur technique est survenue. Veuillez réessayer.';
         }
     }
 }
@@ -139,8 +142,8 @@ require_once 'includes/header.php';
         <p class="mt-1 text-sm text-[hsl(25_15%_42%)]">
             Remplissez ce formulaire, notre équipe revient vers vous rapidement.
         </p>
-        <form method="get" action="" class="mt-6 space-y-4">
-            <input type="hidden" name="sent" value="1">
+        <form method="post" action="" class="mt-6 space-y-4">
+            <?php echo champTokenCSRF(); ?>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="resto" class="block text-sm font-medium text-[hsl(20_30%_14%)]">Nom du restaurant</label>

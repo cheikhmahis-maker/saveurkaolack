@@ -12,14 +12,14 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 }
 
 require_once '../includes/config.php';
+require_once '../includes/db.php';
 
 $plats = [];
 $stats = ['total' => 0, 'disponible' => 0, 'populaire' => 0];
 $erreur = '';
 
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     // Stats
     $stats['total'] = $pdo->query("SELECT COUNT(*) FROM plats")->fetchColumn();
@@ -46,7 +46,7 @@ require_once '../includes/header.php';
 
 $nb_restos_attente = 0;
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
+    $pdo = getDB();
     $nb_restos_attente = $pdo->query("SELECT COUNT(*) FROM restaurants WHERE statut = 'en_attente'")->fetchColumn();
 } catch (PDOException $e) {}
 ?>

@@ -11,13 +11,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Vérifier qu'il y a une commande récente
-if (empty($_SESSION['dernier_numero_tracking'])) {
+// Vérifier qu'il y a une commande récente (session ou cookie)
+if (!empty($_SESSION['dernier_numero_tracking'])) {
+    $numero_tracking = $_SESSION['dernier_numero_tracking'];
+    // Sauvegarder dans un cookie 7 jours pour permettre le rechargement
+    setcookie('confirmation_tracking', $numero_tracking, time() + (7 * 24 * 60 * 60), '/');
+} elseif (!empty($_COOKIE['confirmation_tracking'])) {
+    $numero_tracking = $_COOKIE['confirmation_tracking'];
+} else {
     header('Location: index.php');
     exit();
 }
-
-$numero_tracking = $_SESSION['dernier_numero_tracking'];
 
 // Nettoyer la session (mais garder le numéro pour cette page)
 $pageTitle = 'Commande Confirmée - Saveur Kaolack';
@@ -76,7 +80,7 @@ require_once 'includes/header.php';
                 </div>
             </div>
         </div>
-        <?php else: ?>
+        <?php elseif (!empty($_SESSION['id'])): ?>
         <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
             <div class="flex items-start gap-3">
                 <svg class="h-6 w-6 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,6 +92,21 @@ require_once 'includes/header.php';
                         Votre numéro de commande est enregistré.<br>
                         <strong>Connectez-vous à votre profil</strong> pour voir toutes vos commandes.<br>
                         <a href="profil_client.php" class="underline text-blue-800">Voir mon profil →</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-6 w-6 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-left">
+                    <p class="text-blue-800 font-medium">💡 Conservez votre numéro de suivi</p>
+                    <p class="text-blue-700 text-sm mt-1">
+                        Notez ou copiez ce numéro — c'est votre seul moyen de suivre votre commande.<br>
+                        <a href="connexion.php" class="underline text-blue-800">Créer un compte pour gérer vos commandes →</a>
                     </p>
                 </div>
             </div>
@@ -128,7 +147,7 @@ require_once 'includes/header.php';
 
         <!-- Boutons d'action -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="suivi.php" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-[hsl(14_72%_46%)] px-6 py-3 text-white font-medium hover:bg-[hsl(14_72%_40%)] transition-colors">
+            <a href="suivi.php?token=<?php echo urlencode($numero_tracking); ?>" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-[hsl(14_72%_46%)] px-6 py-3 text-white font-medium hover:bg-[hsl(14_72%_40%)] transition-colors">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>

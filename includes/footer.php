@@ -33,7 +33,7 @@
                 <ul class="space-y-2 text-sm text-[hsl(25_15%_42%)]">
                     <li>Kaolack, Sénégal</li>
                     <li>+221 78 521 65 68</li>
-                    <li>contact@saveur-kaolack.sn</li>
+                    <li>mouhamedsy3002@gmail.com</li>
                 </ul>
             </div>
         </div>

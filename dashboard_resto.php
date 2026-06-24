@@ -11,15 +11,8 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
+require_once 'includes/notifications.php';
 
-// DEBUG - Afficher les infos session
-if (isset($_GET['debug'])) {
-    echo "<pre>DEBUG SESSION:\n";
-    echo "ID: " . ($_SESSION['id'] ?? 'NON') . "\n";
-    echo "Role: " . ($_SESSION['role'] ?? 'NON') . "\n";
-    echo "Nom: " . ($_SESSION['nom'] ?? 'NON') . "\n";
-    echo "</pre>";
-}
 
 // Vérifier que l'utilisateur est connecté et est un restaurant
 if (empty($_SESSION['id']) || $_SESSION['role'] !== 'restaurant') {
@@ -32,11 +25,15 @@ $total_commandes = 0;
 $commandes_en_attente = 0;
 $total_plats = 0;
 $commandes_recentes = [];
+$avis_list = [];
+$note_moyenne = 0;
 $erreur = '';
 
 try {
     $pdo = getDB();
-    
+
+    assurerSchemaTelegram($pdo);
+
     // Récupérer le restaurant associé à l'utilisateur
     $stmt = $pdo->prepare("SELECT * FROM restaurants WHERE utilisateur_id = ? LIMIT 1");
     $stmt->execute([$_SESSION['id']]);
@@ -76,7 +73,8 @@ try {
         
         // Commandes récentes
         $stmt = $pdo->prepare("
-            SELECT c.*, 'Client' as client_nom, '' as client_prenom, '' as telephone
+            SELECT c.id, c.numero_tracking, c.total, c.statut, c.created_at,
+                   c.client_info, c.mode_paiement
             FROM commandes c
             WHERE c.restaurant_id = ?
             ORDER BY c.created_at DESC
@@ -84,6 +82,16 @@ try {
         ");
         $stmt->execute([$restaurant['id']]);
         $commandes_recentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Décoder client_info pour chaque commande
+        foreach ($commandes_recentes as &$cmd) {
+            $info = json_decode($cmd['client_info'] ?? '{}', true) ?: [];
+            $cmd['client_prenom']  = $info['prenom']    ?? '';
+            $cmd['client_tel']     = $info['telephone'] ?? '';
+            $cmd['client_adresse'] = $info['adresse']   ?? '';
+            $cmd['client_quartier']= $info['quartier']  ?? '';
+            $cmd['client_notes']   = $info['notes']     ?? '';
+        }
+        unset($cmd);
         
         // Plats du restaurant
         $stmt = $pdo->prepare("SELECT * FROM plats WHERE restaurant_id = ? ORDER BY categorie, nom");
@@ -116,10 +124,10 @@ $pageTitle = 'Tableau de bord - ' . ($restaurant['nom'] ?? 'Restaurant');
 require_once 'includes/header.php';
 ?>
 
-<div class="container mx-auto px-4 max-w-7xl py-8">
+<div class="container mx-auto px-4 max-w-7xl py-8 pb-24 lg:pb-8">
     <div class="grid gap-6 lg:grid-cols-4">
-        <!-- Sidebar Navigation -->
-        <div class="lg:col-span-1">
+        <!-- Sidebar Navigation — cachée sur mobile, visible sur grand écran -->
+        <div class="hidden lg:block lg:col-span-1">
             <div class="rounded-2xl bg-[hsl(14,72%,46%)] p-4 text-white mb-4">
                 <div class="flex items-center gap-3 px-2 py-2">
                     <div class="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -146,6 +154,7 @@ require_once 'includes/header.php';
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                     </svg>
                     Commandes
+                    <span id="notif-badge" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden cursor-pointer" title="Nouvelles commandes — cliquez pour voir"></span>
                     <?php if ($commandes_en_attente > 0): ?>
                     <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"><?php echo $commandes_en_attente; ?></span>
                     <?php endif; ?>
@@ -167,6 +176,13 @@ require_once 'includes/header.php';
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                     Mot de passe
+                </a>
+                <a href="modifier_restaurant.php#wave" class="flex items-center gap-3 px-4 py-3 rounded-xl text-[hsl(25_15%_42%)] hover:bg-white/50 transition-colors">
+                    <span class="text-lg leading-none">⚙️</span>
+                    Paiement &amp; Notifications
+                    <?php if (!empty($restaurant) && empty($restaurant['wave_api_key'])): ?>
+                    <span class="ml-auto text-xs bg-orange-100 text-orange-600 font-medium px-2 py-0.5 rounded-full">!</span>
+                    <?php endif; ?>
                 </a>
                 <a href="deconnexion.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -220,35 +236,51 @@ require_once 'includes/header.php';
             
             <?php if (!empty($commandes_recentes)): ?>
             <div class="space-y-3">
-                <?php foreach ($commandes_recentes as $cmd): ?>
-                <div class="flex items-center justify-between rounded-xl bg-white p-3 border border-[hsl(30_25%_86%)]">
-                    <div>
-                        <div class="font-medium text-[hsl(20_30%_14%)]">
-                            #<?php echo $cmd['id']; ?> - <?php echo htmlspecialchars($cmd['client_prenom'] . ' ' . $cmd['client_nom']); ?>
+                <?php foreach ($commandes_recentes as $cmd):
+                    $statutClasses = [
+                        'en_attente'    => ['bg-yellow-100 text-yellow-700', 'En attente'],
+                        'confirmee'     => ['bg-blue-100 text-blue-700',   'Confirmée'],
+                        'en_preparation'=> ['bg-orange-100 text-orange-700','En préparation'],
+                        'en_route'      => ['bg-purple-100 text-purple-700','En route'],
+                        'livree'        => ['bg-green-100 text-green-700',  'Livrée'],
+                        'annulee'       => ['bg-red-100 text-red-700',      'Annulée'],
+                    ];
+                    [$sc, $sl] = $statutClasses[$cmd['statut']] ?? ['bg-gray-100 text-gray-700', $cmd['statut']];
+                ?>
+                <div class="rounded-xl bg-white p-3 border border-[hsl(30_25%_86%)] space-y-1">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <div class="font-medium text-[hsl(20_30%_14%)]">
+                                <?php echo htmlspecialchars($cmd['client_prenom'] ?: 'Client'); ?>
+                                <?php if (!empty($cmd['client_tel'])): ?>
+                                — <a href="tel:<?php echo htmlspecialchars($cmd['client_tel']); ?>"
+                                     class="text-[hsl(14_72%_46%)] font-mono text-sm hover:underline">
+                                    <?php echo htmlspecialchars($cmd['client_tel']); ?>
+                                  </a>
+                                <?php endif; ?>
+                            </div>
+                            <?php if (!empty($cmd['client_adresse'])): ?>
+                            <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5">
+                                📍 <?php echo htmlspecialchars($cmd['client_adresse']); ?>
+                                <?php if (!empty($cmd['client_quartier'])): ?>
+                                — <?php echo htmlspecialchars($cmd['client_quartier']); ?>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (!empty($cmd['client_notes'])): ?>
+                            <div class="text-xs text-orange-600 mt-0.5">
+                                💬 <?php echo htmlspecialchars($cmd['client_notes']); ?>
+                            </div>
+                            <?php endif; ?>
                         </div>
-                        <div class="text-sm text-[hsl(25_15%_42%)]">
-                            <?php echo number_format($cmd['total'], 0, ',', ' '); ?> F
-                        </div>
+                        <span class="shrink-0 rounded-full px-3 py-1 text-xs font-medium <?php echo $sc; ?>">
+                            <?php echo $sl; ?>
+                        </span>
                     </div>
-                    <span class="rounded-full px-3 py-1 text-xs font-medium <?php 
-                        switch($cmd['statut']) {
-                            case 'en_attente': echo 'bg-yellow-100 text-yellow-700'; break;
-                            case 'en_preparation': echo 'bg-blue-100 text-blue-700'; break;
-                            case 'en_livraison': echo 'bg-purple-100 text-purple-700'; break;
-                            case 'livree': echo 'bg-green-100 text-green-700'; break;
-                            default: echo 'bg-gray-100 text-gray-700';
-                        }
-                    ?>">
-                        <?php 
-                        switch($cmd['statut']) {
-                            case 'en_attente': echo 'En attente'; break;
-                            case 'en_preparation': echo 'En préparation'; break;
-                            case 'en_livraison': echo 'En livraison'; break;
-                            case 'livree': echo 'Livrée'; break;
-                            default: echo $cmd['statut'];
-                        }
-                        ?>
-                    </span>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</span>
+                        <span class="text-xs text-[hsl(25_15%_42%)] font-mono"><?php echo $cmd['numero_tracking']; ?></span>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
@@ -386,5 +418,114 @@ require_once 'includes/header.php';
     </div><!-- /grid -->
     <?php endif; ?>
 </div><!-- /container -->
+
+<?php if ($restaurant): ?>
+<script>
+(function () {
+    // ── Badge de notification ──────────────────────────────────────
+    const badge = document.getElementById('notif-badge');
+    let lastCheck = Math.floor(Date.now() / 1000); // timestamp Unix actuel
+    let pendingCount = 0;
+
+    // ── Son (Web Audio API) ────────────────────────────────────────
+    function jouerSon() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [0, 0.15, 0.30].forEach(function(delai) {
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type      = 'sine';
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.4, ctx.currentTime + delai);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delai + 0.25);
+                osc.start(ctx.currentTime + delai);
+                osc.stop(ctx.currentTime + delai + 0.25);
+            });
+        } catch(e) { /* Navigateur sans Web Audio */ }
+    }
+
+    // ── Mise à jour du badge ───────────────────────────────────────
+    function mettreAJourBadge(nb) {
+        if (!badge) return;
+        pendingCount += nb;
+        if (pendingCount > 0) {
+            badge.textContent = pendingCount > 9 ? '9+' : pendingCount;
+            badge.classList.remove('hidden');
+            badge.classList.add('animate-pulse');
+        }
+    }
+
+    // ── Polling toutes les 30 secondes ─────────────────────────────
+    function verifier() {
+        fetch('ajax/check_nouvelles_commandes.php?depuis=' + lastCheck)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.nouvelles && data.nouvelles > 0) {
+                    jouerSon();
+                    mettreAJourBadge(data.nouvelles);
+                }
+                if (data.timestamp) {
+                    lastCheck = data.timestamp;
+                }
+            })
+            .catch(function() { /* silencieux */ });
+    }
+
+    // Réinitialiser le badge quand on clique dessus
+    if (badge) {
+        badge.addEventListener('click', function() {
+            pendingCount = 0;
+            badge.classList.add('hidden');
+            badge.classList.remove('animate-pulse');
+            window.location.href = 'commandes.php';
+        });
+    }
+
+    // Vérifier immédiatement au chargement, puis toutes les 30 secondes
+    verifier();
+    setInterval(verifier, 30000);
+})();
+</script>
+<?php endif; ?>
+<!-- Barre de navigation mobile (visible uniquement sur téléphone) -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[hsl(30_25%_86%)] shadow-lg">
+    <div class="grid grid-cols-5 h-16">
+        <a href="dashboard_resto.php" class="flex flex-col items-center justify-center gap-1 text-[hsl(14_72%_46%)]">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span class="text-xs font-medium">Accueil</span>
+        </a>
+        <a href="commandes.php" class="flex flex-col items-center justify-center gap-1 text-[hsl(25_15%_42%)] relative">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <?php if ($commandes_en_attente > 0): ?>
+            <span class="absolute top-2 right-6 bg-red-500 text-white text-xs font-bold w-4 h-4 flex items-center justify-center rounded-full"><?php echo $commandes_en_attente; ?></span>
+            <?php endif; ?>
+            <span class="text-xs">Commandes</span>
+        </a>
+        <a href="mes_plats.php" class="flex flex-col items-center justify-center gap-1 text-[hsl(25_15%_42%)]">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <span class="text-xs">Plats</span>
+        </a>
+        <a href="profil.php" class="flex flex-col items-center justify-center gap-1 text-[hsl(25_15%_42%)]">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <span class="text-xs">Profil</span>
+        </a>
+        <a href="deconnexion.php" class="flex flex-col items-center justify-center gap-1 text-red-500">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="text-xs">Quitter</span>
+        </a>
+    </div>
+</nav>
 
 <?php require_once 'includes/footer.php'; ?>

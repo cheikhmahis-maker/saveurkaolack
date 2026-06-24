@@ -12,14 +12,14 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 }
 
 require_once '../includes/config.php';
+require_once '../includes/db.php';
 
 $avis = [];
 $stats = ['total' => 0, 'en_attente' => 0, 'approuve' => 0];
 $erreur = '';
 
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = getDB();
     
     // Verifier si la table existe
     $tables = $pdo->query("SHOW TABLES LIKE 'avis'")->fetchAll();
@@ -34,12 +34,13 @@ try {
         // Avis avec details
         $stmt = $pdo->query("
             SELECT a.id, a.note, a.commentaire, a.statut, a.created_at,
-                   u.prenom, u.nom,
+                   COALESCE(u.prenom, 'Invité') as prenom,
+                   COALESCE(u.nom, '') as nom,
                    r.nom as resto_nom
             FROM avis a
-            JOIN utilisateurs u ON a.utilisateur_id = u.id
-            JOIN restaurants r ON a.restaurant_id = r.id
-            ORDER BY 
+            LEFT JOIN utilisateurs u ON a.utilisateur_id = u.id
+            LEFT JOIN restaurants r ON a.restaurant_id = r.id
+            ORDER BY
                 CASE a.statut WHEN 'en_attente' THEN 1 ELSE 2 END,
                 a.created_at DESC
             LIMIT 50
@@ -56,7 +57,7 @@ require_once '../includes/header.php';
 
 $nb_restos_attente = 0;
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
+    $pdo = getDB();
     $nb_restos_attente = $pdo->query("SELECT COUNT(*) FROM restaurants WHERE statut = 'en_attente'")->fetchColumn();
 } catch (PDOException $e) {}
 ?>

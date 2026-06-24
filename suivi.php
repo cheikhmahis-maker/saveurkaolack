@@ -6,6 +6,7 @@
 require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
+require_once 'includes/geo.php';
 
 $pageTitle = 'Suivi de commande';
 
@@ -27,7 +28,8 @@ $erreur = '';
 if (!empty($token)) {
     try {
         $pdo = getDB();
-        
+        assurerSchemaAvis($pdo);
+
         // Chercher la commande par son numéro
         $stmt = $pdo->prepare("
             SELECT c.*, r.nom as restaurant_nom, r.telephone as restaurant_telephone
@@ -63,16 +65,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['annuler_commande']) &
     } else {
     try {
         $pdo = getDB();
-        
-        // Verifier le statut actuel
-        $stmt = $pdo->prepare("SELECT statut FROM commandes WHERE numero_tracking = ? LIMIT 1");
+
+        // Verifier le statut actuel et le mode de paiement
+        $stmt = $pdo->prepare("SELECT statut, mode_paiement FROM commandes WHERE numero_tracking = ? LIMIT 1");
         $stmt->execute([strtoupper($token)]);
         $commande_check = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($commande_check && $commande_check['statut'] === 'en_attente') {
             $stmt = $pdo->prepare("UPDATE commandes SET statut = 'annulee' WHERE numero_tracking = ? AND statut = 'en_attente'");
             $stmt->execute([strtoupper($token)]);
-            
+
             if ($stmt->rowCount() > 0) {
                 $message = "Votre commande a été annulée avec succès.";
                 // Recharger les donnees de la commande
@@ -88,6 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['annuler_commande']) &
             } else {
                 $erreur = "Impossible d'annuler cette commande.";
             }
+        } elseif ($commande_check && $commande_check['mode_paiement'] === 'wave' && in_array($commande_check['statut'], ['confirmee', 'en_preparation', 'en_route'])) {
+            // Commande Wave déjà payée : le remboursement doit passer par le support
+            $erreur = "Cette commande a été payée par Wave. Pour demander un remboursement, contactez-nous au " . SITE_TEL . " en précisant votre numéro de commande.";
         } else {
             $erreur = "Cette commande ne peut plus être annulée (déjà en préparation ou livrée).";
         }
@@ -114,13 +119,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['laisser_avis']) && !e
         if ($commande_check && $commande_check['statut'] === 'livree') {
             $note = intval($_POST['note'] ?? 0);
             $commentaire = trim($_POST['commentaire'] ?? '');
-            
+
             if ($note >= 1 && $note <= 5) {
-                // Inserer l'avis
-                $stmt = $pdo->prepare("INSERT INTO avis (commande_id, restaurant_id, note, commentaire, statut) VALUES (?, ?, ?, ?, 'approuve')");
-                $stmt->execute([$commande_check['id'], $commande_check['restaurant_id'], $note, $commentaire]);
-                
-                $message = "Merci pour votre avis !";
+                // Vérifier qu'un avis n'a pas déjà été laissé pour cette commande
+                $existe = $pdo->prepare("SELECT id FROM avis WHERE commande_id = ? LIMIT 1");
+                $existe->execute([$commande_check['id']]);
+                if ($existe->fetch()) {
+                    $erreur = "Vous avez déjà laissé un avis pour cette commande.";
+                } else {
+                    $utilisateur_id = $_SESSION['id'] ?? null;
+                    $stmt = $pdo->prepare("INSERT INTO avis (commande_id, utilisateur_id, restaurant_id, note, commentaire, statut) VALUES (?, ?, ?, ?, ?, 'approuve')");
+                    $stmt->execute([$commande_check['id'], $utilisateur_id, $commande_check['restaurant_id'], $note, $commentaire]);
+                    $message = "Merci pour votre avis !";
+                }
             } else {
                 $erreur = "Veuillez sélectionner une note entre 1 et 5.";
             }
@@ -353,7 +364,7 @@ require_once 'includes/header.php';
             
             <?php if ($commande['statut'] === 'livree'): ?>
             <!-- Formulaire d'avis pour commande livree -->
-            <div class="rounded-2xl border border-green-200 bg-green-50 p-4 mt-4">
+            <div id="avis" class="rounded-2xl border border-green-200 bg-green-50 p-4 mt-4">
                 <h3 class="font-semibold text-green-800 mb-3 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
@@ -366,11 +377,11 @@ require_once 'includes/header.php';
                     <input type="hidden" name="laisser_avis" value="1">
                     <div>
                         <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-2">Note</label>
-                        <div class="flex gap-2">
+                        <div class="flex gap-1" id="star-group">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="note" value="<?php echo $i; ?>" class="hidden peer" required>
-                                <span class="text-2xl peer-checked:text-yellow-500 text-gray-300 hover:text-yellow-400 transition-colors">★</span>
+                            <label class="star-label cursor-pointer" data-val="<?php echo $i; ?>">
+                                <input type="radio" name="note" value="<?php echo $i; ?>" class="hidden" required>
+                                <span class="text-3xl text-gray-300 transition-colors select-none">★</span>
                             </label>
                             <?php endfor; ?>
                         </div>
@@ -390,4 +401,27 @@ require_once 'includes/header.php';
     </div>
 </section>
 
+<script>
+(function () {
+    const labels  = document.querySelectorAll('.star-label');
+    const spans   = [...labels].map(l => l.querySelector('span'));
+    let selected  = 0;
+
+    function coloriser(jusqu) {
+        spans.forEach((s, i) => {
+            s.classList.toggle('text-yellow-400', i < jusqu);
+            s.classList.toggle('text-gray-300',   i >= jusqu);
+        });
+    }
+
+    labels.forEach((lbl, idx) => {
+        lbl.addEventListener('mouseenter', () => coloriser(idx + 1));
+        lbl.addEventListener('mouseleave', () => coloriser(selected));
+        lbl.addEventListener('click', () => {
+            selected = idx + 1;
+            coloriser(selected);
+        });
+    });
+})();
+</script>
 <?php require_once 'includes/footer.php'; ?>

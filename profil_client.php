@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once 'includes/config.php';
+require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 // Vérifier connexion client
@@ -22,21 +23,30 @@ $client_nom = $_SESSION['prenom'] . ' ' . $_SESSION['nom'];
 $client_email = $_SESSION['email'];
 
 // Connexion BDD
+$commandes = [];
+$total_commandes = 0;
+$commandes_en_cours = [];
+$commandes_livrees = [];
+
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=saveur_kaolack;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // D'abord, lier les anciennes commandes sans client_id (mode invité → connecté)
-    $stmt_update = $pdo->prepare("
-        UPDATE commandes 
-        SET client_id = ? 
-        WHERE client_id IS NULL AND client_info LIKE ?
-    ");
-    $stmt_update->execute([$client_id, '%"email":"' . $client_email . '"%']);
-    
-    // Ensuite, récupérer TOUTES les commandes du client (y compris les nouvellement liées)
+    $pdo = getDB();
+
+    // Lier les anciennes commandes sans client_id (mode invité → connecté)
+    // Séparé du SELECT pour qu'une erreur ici ne bloque pas l'affichage
+    try {
+        $stmt_update = $pdo->prepare("
+            UPDATE commandes
+            SET client_id = ?
+            WHERE client_id IS NULL AND client_info LIKE ?
+        ");
+        $stmt_update->execute([$client_id, '%"email":"' . $client_email . '"%']);
+    } catch (PDOException $e) {
+        // La colonne client_info peut ne pas exister — ignorer silencieusement
+    }
+
+    // Récupérer les commandes : par client_id OU par email dans client_info
     $stmt = $pdo->prepare("
-        SELECT c.*, r.nom as restaurant_nom, r.photo_logo
+        SELECT c.*, r.nom as restaurant_nom, r.logo AS photo_logo
         FROM commandes c
         LEFT JOIN restaurants r ON c.restaurant_id = r.id
         WHERE c.client_id = ?
@@ -44,18 +54,31 @@ try {
     ");
     $stmt->execute([$client_id]);
     $commandes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
+    // Si aucune commande par client_id, chercher par email dans client_info
+    if (empty($commandes)) {
+        try {
+            $stmt2 = $pdo->prepare("
+                SELECT c.*, r.nom as restaurant_nom, r.logo AS photo_logo
+                FROM commandes c
+                LEFT JOIN restaurants r ON c.restaurant_id = r.id
+                WHERE c.client_info LIKE ?
+                ORDER BY c.created_at DESC
+            ");
+            $stmt2->execute(['%"email":"' . $client_email . '"%']);
+            $commandes = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // client_info absent — pas de fallback
+        }
+    }
+
     // Statistiques
     $total_commandes = count($commandes);
     $commandes_en_cours = array_filter($commandes, fn($c) => !in_array($c['statut'], ['livree', 'annulee']));
-    $commandes_livrees = array_filter($commandes, fn($c) => $c['statut'] === 'livree');
-    
+    $commandes_livrees  = array_filter($commandes, fn($c) => $c['statut'] === 'livree');
+
 } catch (PDOException $e) {
-    $erreur = 'Erreur de connexion';
-    $commandes = [];
-    $total_commandes = 0;
-    $commandes_en_cours = [];
-    $commandes_livrees = [];
+    $erreur = 'Erreur de connexion : ' . $e->getMessage();
 }
 
 // Fonction pour le badge de statut
@@ -70,6 +93,7 @@ function getStatutBadge($statut) {
     ];
     return $badges[$statut] ?? ['❓', $statut, 'bg-gray-100 text-gray-800'];
 }
+
 
 $pageTitle = 'Mon Profil - Mes Commandes';
 require_once 'includes/header.php';
@@ -92,18 +116,18 @@ require_once 'includes/header.php';
 <section class="container mx-auto px-4 max-w-4xl py-8">
     
     <!-- Statistiques -->
-    <div class="grid grid-cols-3 gap-4 mb-8">
-        <div class="bg-white rounded-xl p-4 shadow-sm border border-[hsl(30_25%_86%)] text-center">
-            <div class="text-3xl font-bold text-[hsl(14_72%_46%)]"><?php echo $total_commandes; ?></div>
-            <div class="text-sm text-[hsl(25_15%_42%)]">Commandes totales</div>
+    <div class="grid grid-cols-3 gap-3 mb-8">
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-[hsl(30_25%_86%)] text-center">
+            <div class="text-2xl font-bold text-[hsl(14_72%_46%)]"><?php echo $total_commandes; ?></div>
+            <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5 leading-tight">Total</div>
         </div>
-        <div class="bg-white rounded-xl p-4 shadow-sm border border-[hsl(30_25%_86%)] text-center">
-            <div class="text-3xl font-bold text-orange-600"><?php echo count($commandes_en_cours); ?></div>
-            <div class="text-sm text-[hsl(25_15%_42%)]">En cours</div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-[hsl(30_25%_86%)] text-center">
+            <div class="text-2xl font-bold text-orange-600"><?php echo count($commandes_en_cours); ?></div>
+            <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5 leading-tight">En cours</div>
         </div>
-        <div class="bg-white rounded-xl p-4 shadow-sm border border-[hsl(30_25%_86%)] text-center">
-            <div class="text-3xl font-bold text-green-600"><?php echo count($commandes_livrees); ?></div>
-            <div class="text-sm text-[hsl(25_15%_42%)]">Livrées</div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-[hsl(30_25%_86%)] text-center">
+            <div class="text-2xl font-bold text-green-600"><?php echo count($commandes_livrees); ?></div>
+            <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5 leading-tight">Livrées</div>
         </div>
     </div>
     
