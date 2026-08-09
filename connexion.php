@@ -357,7 +357,7 @@ require_once 'includes/header.php';
         <?php endif; ?>
 
         <p class="mt-6 text-center text-xs text-[hsl(25_15%_42%)]">
-            Vous êtes restaurateur ? <a href="/saveur-php/partenaire.php" class="font-semibold text-[hsl(14_72%_46%)] hover:underline">Inscrire mon restaurant</a>
+            Vous êtes restaurateur ? <a href="<?php echo BASE_URL; ?>partenaire.php" class="font-semibold text-[hsl(14_72%_46%)] hover:underline">Inscrire mon restaurant</a>
         </p>
     </div>
 </section>

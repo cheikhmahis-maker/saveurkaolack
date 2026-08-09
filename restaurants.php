@@ -19,7 +19,10 @@ try {
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Construction de la requête avec filtres
-    $where = ["statut = 'actif'"];
+    $where = [
+        "statut = 'actif'",
+        "(essai_debut IS NULL OR DATE_ADD(essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (abonnement_jusquau IS NOT NULL AND abonnement_jusquau >= CURDATE()))",
+    ];
     $params = [];
     
     // Recherche texte
@@ -177,7 +180,7 @@ require_once 'includes/header.php';
                 </div>
             </div>
             <div class="px-4 pb-4">
-                <a href="/saveur-php/restaurant.php?id=<?php echo $r['id']; ?>" 
+                <a href="<?php echo BASE_URL; ?>restaurant.php?id=<?php echo $r['id']; ?>" 
                    class="block w-full py-2.5 text-center rounded-xl <?php echo $btnClass; ?> transition-colors font-medium">
                     <?php echo $btnText; ?>
                 </a>

@@ -3,6 +3,10 @@
  * MODIFIER PLAT - Modification d'un plat
  */
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
@@ -47,22 +51,40 @@ try {
         // Vérifier le token CSRF
         if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
             $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";
+        } elseif (!restaurantEnRegle($restaurant)) {
+            $erreur = "Votre essai gratuit est terminé. Contactez l'administrateur pour réactiver votre compte.";
         } else {
         $nom = trim($_POST['nom'] ?? '');
         $description = trim($_POST['description'] ?? '');
-        $prix = intval($_POST['prix'] ?? 0);
+        $prix = floatval($_POST['prix'] ?? 0);
         $categorie = trim($_POST['categorie'] ?? '');
         $disponible = isset($_POST['disponible']) ? 1 : 0;
         
         if (empty($nom) || $prix <= 0) {
             $erreur = 'Le nom et le prix sont obligatoires.';
         } else {
+            // Gérer l'upload de nouvelle photo
+            $photo = $plat['photo'];
+            if (!empty($_FILES['photo']['tmp_name']) && $_FILES['photo']['error'] === 0) {
+                $resultat = uploadImageSecurise($_FILES['photo'], 'uploads/plats/', 1200, 900, 2097152);
+                if (isset($resultat['filename'])) {
+                    if ($photo && file_exists('uploads/plats/' . $photo)) {
+                        unlink('uploads/plats/' . $photo);
+                    }
+                    $photo = $resultat['filename'];
+                } else {
+                    $erreur = "Erreur upload photo : " . ($resultat['error'] ?? 'Erreur inconnue');
+                }
+            }
+
+            if (empty($erreur)) {
             $stmt = $pdo->prepare("
-                UPDATE plats 
-                SET nom = ?, description = ?, prix = ?, categorie = ?, disponible = ?
+                UPDATE plats
+                SET nom = ?, description = ?, prix = ?, categorie = ?, photo = ?, disponible = ?
                 WHERE id = ? AND restaurant_id = ?
             ");
-            $stmt->execute([$nom, $description, $prix, $categorie, $disponible, $plat_id, $restaurant['id']]);
+            $stmt->execute([$nom, $description, $prix, $categorie, $photo, $disponible, $plat_id, $restaurant['id']]);
+            }
             
             $succes = 'Plat modifié avec succès !';
             
@@ -98,7 +120,7 @@ require_once 'includes/header.php';
     <?php endif; ?>
 
     <?php if ($plat): ?>
-    <form method="POST" class="space-y-4 rounded-2xl bg-[hsl(36_50%_98%)] border border-[hsl(30_25%_86%)] p-6 shadow-soft">
+    <form method="POST" enctype="multipart/form-data" class="space-y-4 rounded-2xl bg-[hsl(36_50%_98%)] border border-[hsl(30_25%_86%)] p-6 shadow-soft">
         <?php echo champTokenCSRF(); ?>
         <div>
             <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Nom du plat *</label>
@@ -129,6 +151,21 @@ require_once 'includes/header.php';
                     <option value="Accompagnement" <?php echo $plat['categorie'] === 'Accompagnement' ? 'selected' : ''; ?>>Accompagnement</option>
                 </select>
             </div>
+        </div>
+
+        <!-- Photo -->
+        <div>
+            <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Photo du plat</label>
+            <?php if (!empty($plat['photo'])): ?>
+            <div class="mb-2">
+                <img src="uploads/plats/<?php echo htmlspecialchars($plat['photo']); ?>"
+                     alt="Photo actuelle"
+                     class="h-24 w-24 rounded-xl object-cover border border-[hsl(30_25%_86%)]">
+                <p class="text-xs text-[hsl(25_15%_42%)] mt-1">Photo actuelle — choisissez un fichier pour la remplacer</p>
+            </div>
+            <?php endif; ?>
+            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                   class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[hsl(14_72%_46%)] file:text-white hover:file:bg-[hsl(14_72%_40%)]">
         </div>
 
         <div class="flex items-center gap-2">

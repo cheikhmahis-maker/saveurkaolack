@@ -12,6 +12,15 @@ require_once 'includes/geo.php';
 // Récupérer l'ID du restaurant
 $restaurant_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// Détecter le restaurant actuellement dans le panier
+$cart_restaurant_id  = 0;
+$cart_restaurant_nom = '';
+if (!empty($_SESSION['cart'])) {
+    $firstItem = reset($_SESSION['cart']);
+    $cart_restaurant_id  = (int) ($firstItem['restaurant_id'] ?? 0);
+    $cart_restaurant_nom = $firstItem['restaurant_nom'] ?? '';
+}
+
 if ($restaurant_id <= 0) {
     header('Location: restaurants.php');
     exit;
@@ -26,6 +35,7 @@ try {
         FROM restaurants r 
         LEFT JOIN categories c ON r.categorie_id = c.id 
         WHERE r.id = ? AND r.statut = 'actif'
+          AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))
         LIMIT 1
     ");
     $stmt->execute([$restaurant_id]);
@@ -240,7 +250,9 @@ require_once 'includes/header.php';
                                     </span>
                                 </div>
                                 <a href="panier.php?add=<?php echo $plat['id']; ?>"
-                                   class="mt-2 inline-flex h-10 items-center gap-2 rounded-lg bg-[hsl(14_72%_46%)] px-4 text-white text-sm font-medium hover:bg-[hsl(14_72%_40%)] transition-colors <?php echo !$isOpen ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''; ?>">
+                                   class="btn-ajouter mt-2 inline-flex h-10 items-center gap-2 rounded-lg bg-[hsl(14_72%_46%)] px-4 text-white text-sm font-medium hover:bg-[hsl(14_72%_40%)] transition-colors <?php echo !$isOpen ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''; ?>"
+                                   data-restaurant-id="<?php echo $restaurant_id; ?>"
+                                   data-restaurant-nom="<?php echo htmlspecialchars($restaurant['nom'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                     </svg>
@@ -377,5 +389,65 @@ require_once 'includes/header.php';
 })();
 </script>
 <?php endif; ?>
+
+<!-- Modale confirmation changement de restaurant -->
+<div id="modal-restaurant" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 px-4">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h3 class="mt-4 text-center font-display text-lg font-bold text-[hsl(20_30%_14%)]">Changer de restaurant ?</h3>
+        <p class="mt-2 text-center text-sm text-[hsl(25_15%_42%)]" id="modal-message"></p>
+        <div class="mt-6 flex gap-3">
+            <button id="modal-annuler" class="flex-1 rounded-2xl border border-[hsl(30_25%_86%)] py-2.5 text-sm font-medium text-[hsl(20_30%_14%)] hover:bg-[hsl(36_78%_92%)] transition-colors">
+                Annuler
+            </button>
+            <a id="modal-confirmer" href="#" class="flex-1 rounded-2xl bg-[hsl(14_72%_46%)] py-2.5 text-center text-sm font-medium text-white hover:bg-[hsl(14_72%_40%)] transition-colors">
+                Confirmer
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const cartRestaurantId  = <?php echo $cart_restaurant_id; ?>;
+    const cartRestaurantNom = <?php echo json_encode($cart_restaurant_nom); ?>;
+    const modal    = document.getElementById('modal-restaurant');
+    const message  = document.getElementById('modal-message');
+    const annuler  = document.getElementById('modal-annuler');
+    const confirmer = document.getElementById('modal-confirmer');
+
+    document.querySelectorAll('.btn-ajouter').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            const restoId = parseInt(this.dataset.restaurantId);
+            const restoNom = this.dataset.restaurantNom;
+            const href = this.getAttribute('href');
+
+            if (cartRestaurantId > 0 && cartRestaurantId !== restoId) {
+                e.preventDefault();
+                message.textContent = 'Votre panier contient des plats de "' + cartRestaurantNom + '". Si vous continuez, ils seront supprimés.';
+                confirmer.setAttribute('href', href);
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        });
+    });
+
+    annuler.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    });
+
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    });
+})();
+</script>
 
 <?php require_once 'includes/footer.php'; ?>

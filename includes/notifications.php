@@ -128,13 +128,13 @@ HTML;
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
             require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
-            $mail             = new PHPMailer\PHPMailer(true);
+            $mail             = new PHPMailer\PHPMailer\PHPMailer(true);
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
             $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
-            $mail->SMTPSecure = PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
             $mail->CharSet    = 'UTF-8';
             $mail->setFrom('noreply@saveurkaolack.sn', 'Saveur Kaolack');
@@ -145,6 +145,88 @@ HTML;
             return $mail->send();
         } catch (Exception $e) {
             error_log("Email restaurant erreur: " . $e->getMessage());
+        }
+    }
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8\r\n";
+    $headers .= "From: Saveur Kaolack <noreply@saveurkaolack.sn>\r\n";
+    return mail($email_resto, $sujet, $html, $headers);
+}
+
+/**
+ * Envoie un email de confirmation de demande de partenariat au restaurant
+ */
+function envoyerEmailConfirmationPartenaire(
+    string $nom_resto,
+    string $proprietaire,
+    string $email_resto
+): bool {
+    if (empty($email_resto) || !filter_var($email_resto, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    $nom_safe   = htmlspecialchars($nom_resto);
+    $prop_safe  = htmlspecialchars($proprietaire);
+
+    $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;background:#f9f5f0;">
+<div style="max-width:600px;margin:24px auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e8d5c4;">
+
+    <div style="background:#c0392b;padding:20px 24px;">
+        <h2 style="margin:0;color:#fff;font-size:22px;">Saveur Kaolack</h2>
+        <p style="margin:4px 0 0;color:#fff;opacity:.85;font-size:14px;">Demande de partenariat reçue</p>
+    </div>
+
+    <div style="padding:24px;">
+        <p style="font-size:16px;">Bonjour <strong>{$prop_safe}</strong>,</p>
+        <p>Nous avons bien reçu votre demande de partenariat pour <strong>{$nom_safe}</strong>.</p>
+
+        <div style="background:#fff8f5;border-left:4px solid #c0392b;padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0;">
+            <p style="margin:0;font-size:15px;font-weight:bold;color:#c0392b;">Et maintenant ?</p>
+            <p style="margin:8px 0 0;color:#555;">Notre équipe va examiner votre dossier. Vous recevrez vos identifiants de connexion par email dès que votre restaurant sera validé, généralement sous 24h.</p>
+        </div>
+
+        <p style="color:#555;">Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+        <p style="color:#555;margin-bottom:0;">L'équipe <strong>Saveur Kaolack</strong></p>
+    </div>
+
+    <div style="padding:12px 24px;background:#f9f5f0;border-top:1px solid #f0e8df;text-align:center;font-size:12px;color:#aaa;">
+        Saveur Kaolack — Notification automatique
+    </div>
+</div>
+</body>
+</html>
+HTML;
+
+    $sujet = "Votre demande a bien été reçue — Saveur Kaolack";
+
+    $phpmailerPath = __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+    if (file_exists($phpmailerPath)) {
+        try {
+            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
+            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
+            $mail             = new PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
+            $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
+            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            $mail->CharSet    = 'UTF-8';
+            $mail->setFrom('noreply@saveurkaolack.sn', 'Saveur Kaolack');
+            $mail->addAddress($email_resto, $nom_resto);
+            $mail->Subject    = $sujet;
+            $mail->isHTML(true);
+            $mail->Body       = $html;
+            return $mail->send();
+        } catch (Exception $e) {
+            error_log("Email confirmation partenaire erreur: " . $e->getMessage());
         }
     }
 

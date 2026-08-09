@@ -19,7 +19,8 @@ if (empty($_SESSION['id']) || empty($_SESSION['role'])) {
 
 $user_id = $_SESSION['id'];
 $user_role = $_SESSION['role'];
-$table = ($user_role === 'client') ? 'utilisateurs' : (($user_role === 'restaurant') ? 'restaurants' : 'admins');
+// Client, restaurant et admin partagent tous la même table utilisateurs (voir connexion.php)
+$table = 'utilisateurs';
 
 $message = '';
 $erreur = '';
@@ -33,9 +34,12 @@ try {
         $ancien_mdp = $_POST['ancien_mdp'] ?? '';
         $nouveau_mdp = $_POST['nouveau_mdp'] ?? '';
         $confirmation_mdp = $_POST['confirmation_mdp'] ?? '';
-        
+
+        if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
+            $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";
+        }
         // Vérifier que les champs sont remplis
-        if (empty($ancien_mdp) || empty($nouveau_mdp) || empty($confirmation_mdp)) {
+        elseif (empty($ancien_mdp) || empty($nouveau_mdp) || empty($confirmation_mdp)) {
             $erreur = "Tous les champs sont obligatoires.";
         }
         // Vérifier que le nouveau mot de passe fait au moins 6 caractères
@@ -106,6 +110,7 @@ require_once 'includes/header.php';
         <?php endif; ?>
 
         <form method="POST" class="space-y-4">
+            <?php echo champTokenCSRF(); ?>
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Ancien mot de passe</label>
                 <input type="password" name="ancien_mdp" required class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">

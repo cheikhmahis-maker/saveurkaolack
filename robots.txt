@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /ajax/
+Disallow: /resto/
+Disallow: /includes/
+Disallow: /uploads/temp/
+Disallow: /database/
+
+# ⚠️ Remplacer par le vrai nom de domaine une fois l'hébergeur choisi
+Sitemap: https://À_DEFINIR/sitemap.xml

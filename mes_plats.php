@@ -23,20 +23,23 @@ $erreur = '';
 // Connexion BDD
 try {
     $pdo = getDB();
-    
+    assurerSchemaEssai($pdo);
+
     // Récupérer le restaurant
     $stmt = $pdo->prepare("SELECT * FROM restaurants WHERE utilisateur_id = ? LIMIT 1");
     $stmt->execute([$_SESSION['id']]);
     $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$restaurant) {
         $erreur = "Aucun restaurant associé à votre compte.";
     } else {
         $restaurant_id = $restaurant['id'];
-        
+
         // TRAITEMENT DES ACTIONS
         // Ajouter un plat
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && !restaurantEnRegle($restaurant)) {
+            $erreur = "Votre essai gratuit est terminé. Contactez l'administrateur pour réactiver votre compte.";
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if ($_POST['action'] === 'ajouter') {
                 // Vérification CSRF
                 if (!isset($_POST['csrf_token']) || !verifierTokenCSRF($_POST['csrf_token'])) {
@@ -63,6 +66,8 @@ try {
                 if (empty($erreur) && !empty($nom) && $prix > 0) {
                     $stmt = $pdo->prepare("INSERT INTO plats (nom, description, prix, categorie, photo, restaurant_id, disponible) VALUES (?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([$nom, $description, $prix, $categorie, $photo, $restaurant_id, $disponible]);
+                    // Démarre l'essai gratuit de 45 jours au tout premier plat ajouté (ne touche rien si déjà démarré)
+                    $pdo->prepare("UPDATE restaurants SET essai_debut = COALESCE(essai_debut, CURDATE()) WHERE id = ?")->execute([$restaurant_id]);
                     $message = "Plat ajouté avec succès !";
                 } elseif (empty($erreur)) {
                     $erreur = "Le nom et le prix sont obligatoires.";

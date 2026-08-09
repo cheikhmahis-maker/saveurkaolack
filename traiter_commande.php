@@ -32,12 +32,12 @@ if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
     exit();
 }
 
-$prenom       = trim($_POST['prenom']        ?? '');
-$telephone    = trim($_POST['telephone']     ?? '');
-$email        = trim($_POST['email']         ?? '');
-$adresse      = trim($_POST['adresse']       ?? '');
-$quartier     = trim($_POST['quartier']      ?? '');
-$notes        = trim($_POST['notes']         ?? '');
+$prenom       = substr(trim($_POST['prenom']        ?? ''), 0, 100);
+$telephone    = substr(trim($_POST['telephone']     ?? ''), 0, 20);
+$email        = substr(trim($_POST['email']         ?? ''), 0, 150);
+$adresse      = substr(trim($_POST['adresse']       ?? ''), 0, 300);
+$quartier     = substr(trim($_POST['quartier']      ?? ''), 0, 100);
+$notes        = substr(trim($_POST['notes']         ?? ''), 0, 500);
 $restaurant_id = intval($_POST['restaurant_id'] ?? 0);
 $paiement_post = trim($_POST['paiement']     ?? 'espece');
 
@@ -51,6 +51,13 @@ if (empty($prenom) || empty($telephone) || empty($adresse)) {
 $chiffres_tel = preg_replace('/\D/', '', $telephone);
 if (strlen($chiffres_tel) < 7 || strlen($chiffres_tel) > 15) {
     $_SESSION['erreur_commande'] = "Le numéro de téléphone n'est pas valide. Exemple : 77 123 45 67";
+    header('Location: checkout.php');
+    exit();
+}
+
+// Email obligatoire pour les invités
+if (!$estConnecte && empty($email)) {
+    $_SESSION['erreur_commande'] = "L'adresse email est obligatoire pour recevoir votre numéro de suivi.";
     header('Location: checkout.php');
     exit();
 }
@@ -82,7 +89,7 @@ function _envoyerNotificationsRestaurant(array $restaurant, string $prenom, stri
 function genererNumeroTracking(): string {
     $prefix = 'SK';
     $date   = date('ymd');
-    $random = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 4));
+    $random = strtoupper(bin2hex(random_bytes(2)));
     return $prefix . '-' . $date . '-' . $random;
 }
 
@@ -157,6 +164,18 @@ try {
     $stmt_resto->execute([$restaurant_id]);
     $restaurant_row = $stmt_resto->fetch(PDO::FETCH_ASSOC) ?: [];
     $restaurant_nom = $restaurant_row['nom'] ?? 'Restaurant';
+
+    // Revalider que le restaurant est actif et ouvert (ne pas se fier au bouton désactivé côté client)
+    if (empty($restaurant_row) || $restaurant_row['statut'] !== 'actif' || !restaurantEnRegle($restaurant_row)) {
+        $_SESSION['erreur_commande'] = "Ce restaurant n'est plus disponible. Veuillez choisir un autre restaurant.";
+        header('Location: panier.php');
+        exit();
+    }
+    if (!estRestaurantOuvert($restaurant_row['heure_ouverture'], $restaurant_row['heure_fermeture'])) {
+        $_SESSION['erreur_commande'] = "Ce restaurant est fermé pour le moment. Veuillez réessayer pendant ses heures d'ouverture.";
+        header('Location: panier.php');
+        exit();
+    }
 
     $client_id = $estConnecte ? $_SESSION['id'] : null;
 

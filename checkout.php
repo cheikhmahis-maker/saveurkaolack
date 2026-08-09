@@ -166,10 +166,10 @@ require_once 'includes/header.php';
                     <?php else: ?>
                     <div>
                         <label class="block text-sm font-medium text-[hsl(20_30%_14%)]">
-                            Email
-                            <span class="text-xs font-normal text-[hsl(25_15%_42%)]"> — optionnel, pour recevoir votre numéro de suivi</span>
+                            Email <span class="text-red-500">*</span>
+                            <span class="text-xs font-normal text-[hsl(25_15%_42%)]"> — votre numéro de suivi sera envoyé ici</span>
                         </label>
-                        <input type="email" name="email"
+                        <input type="email" name="email" required
                                class="mt-1.5 h-11 w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20"
                                placeholder="votre@email.com">
                     </div>

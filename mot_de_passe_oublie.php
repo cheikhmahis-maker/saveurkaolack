@@ -102,8 +102,7 @@ HTML;
                     $succes = '✅ Email envoyé ! Vérifiez votre boîte de réception (et vos spams). Le lien est valable 1 heure.';
                 } else {
                     $succes = '⚠️ La demande a été enregistrée mais l\'email n\'a pas pu être envoyé. <br><br>
-                    <strong>Cause probable :</strong> La configuration Gmail n\'est pas encore faite.<br>
-                    <a href="config_email.php" class="text-[hsl(14_72%_46%)] underline">Voir comment configurer l\'email →</a>';
+                    <strong>Cause probable :</strong> La configuration Gmail n\'est pas encore faite.';
                 }
             } else {
                 // Pour la sécurité, ne pas révéler si l'email existe ou pas

@@ -26,10 +26,11 @@ try {
     // Restaurants populaires (top 3 par note)
     $stmt = $pdo->query("
         SELECT r.*, c.nom as categorie_nom, c.icone 
-        FROM restaurants r 
-        LEFT JOIN categories c ON r.categorie_id = c.id 
-        WHERE r.statut = 'actif' 
-        ORDER BY r.note_moyenne DESC 
+        FROM restaurants r
+        LEFT JOIN categories c ON r.categorie_id = c.id
+        WHERE r.statut = 'actif'
+          AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))
+        ORDER BY r.note_moyenne DESC
         LIMIT 3
     ");
     $restaurants_populaires = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -46,6 +47,7 @@ try {
         JOIN plats p ON p.id = sub.first_plat_id
         JOIN restaurants r ON r.id = p.restaurant_id
         WHERE r.statut = 'actif'
+          AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))
         ORDER BY RAND()
         LIMIT 6
     ");
@@ -81,22 +83,22 @@ require_once 'includes/header.php';
                 Sans inscription, suivi en direct, paiement à la livraison.
             </p>
 
-            <div class="flex flex-col gap-3 sm:flex-row">
+            <form method="GET" action="<?php echo BASE_URL; ?>restaurants.php" class="flex flex-col gap-3 sm:flex-row">
                 <div class="relative flex-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[hsl(14_72%_46%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <input type="text" placeholder="Votre quartier à Kaolack…" 
+                    <input type="text" name="q" placeholder="Votre quartier à Kaolack…"
                            class="h-14 w-full rounded-2xl border border-[hsl(30_25%_86%)] bg-[hsl(36_50%_98%)] pl-12 pr-4 text-sm shadow-card focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20">
                 </div>
-                <a href="/saveur-php/restaurants.php" class="h-14 inline-flex items-center justify-center gap-2 rounded-2xl px-7 bg-gradient-warm text-[hsl(38_60%_97%)] text-base font-medium shadow-warm hover:opacity-90 transition-opacity">
+                <button type="submit" class="h-14 inline-flex items-center justify-center gap-2 rounded-2xl px-7 bg-gradient-warm text-[hsl(38_60%_97%)] text-base font-medium shadow-warm hover:opacity-90 transition-opacity">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     Trouver
-                </a>
-            </div>
+                </button>
+            </form>
 
             <div class="flex flex-wrap items-center gap-6 pt-2 text-sm text-[hsl(25_15%_42%)]">
                 <div class="flex items-center gap-2">
@@ -148,7 +150,7 @@ require_once 'includes/header.php';
             </div>
 
             <!-- Assistant IA Card (cliquable) -->
-            <button onclick="document.getElementById('chatbot-toggle').click()" class="absolute -bottom-6 -left-4 hidden w-56 rounded-2xl bg-[hsl(36_50%_98%)] p-3 shadow-warm md:block hover:shadow-lg hover:scale-105 transition-all cursor-pointer text-left">
+            <button onclick="var t=document.getElementById('chatbot-toggle'); if(t) t.click();" class="absolute -bottom-6 -left-4 hidden w-56 rounded-2xl bg-[hsl(36_50%_98%)] p-3 shadow-warm md:block hover:shadow-lg hover:scale-105 transition-all cursor-pointer text-left">
                 <div class="flex items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-sun">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[hsl(20_50%_14%)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -175,7 +177,7 @@ require_once 'includes/header.php';
             <div class="mb-2 text-xs font-semibold uppercase tracking-widest text-[hsl(14_72%_46%)]">Explorer</div>
             <h2 class="font-display text-3xl font-bold text-[hsl(20_30%_14%)] md:text-4xl">Parcourez par catégorie</h2>
         </div>
-        <a href="/saveur-php/restaurants.php" class="hidden text-[hsl(14_72%_46%)] hover:underline md:inline-flex items-center gap-1">
+        <a href="<?php echo BASE_URL; ?>restaurants.php" class="hidden text-[hsl(14_72%_46%)] hover:underline md:inline-flex items-center gap-1">
             Tout voir
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -186,7 +188,7 @@ require_once 'includes/header.php';
     <?php if (!empty($categories)): ?>
     <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
         <?php foreach ($categories as $cat): ?>
-        <a href="/saveur-php/restaurants.php?cat=<?php echo $cat['id']; ?>" 
+        <a href="<?php echo BASE_URL; ?>restaurants.php?cat=<?php echo $cat['id']; ?>" 
            class="group flex flex-col items-center gap-3 rounded-2xl border border-[hsl(30_25%_86%)]/60 bg-[hsl(36_50%_98%)] p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-warm hover:border-[hsl(14_72%_46%)]/30">
             <div class="flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(36_78%_92%)] text-2xl transition-colors group-hover:bg-[hsl(14_72%_46%)]/10">
                 <?php
@@ -222,7 +224,7 @@ require_once 'includes/header.php';
                 <div class="mb-2 text-xs font-semibold uppercase tracking-widest text-[hsl(14_72%_46%)]">À Kaolack</div>
                 <h2 class="font-display text-3xl font-bold text-[hsl(20_30%_14%)] md:text-4xl">Restaurants ouverts maintenant</h2>
             </div>
-            <a href="/saveur-php/restaurants.php" class="hidden text-[hsl(14_72%_46%)] hover:underline md:inline-flex items-center gap-1">
+            <a href="<?php echo BASE_URL; ?>restaurants.php" class="hidden text-[hsl(14_72%_46%)] hover:underline md:inline-flex items-center gap-1">
                 Tous les restos 
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -235,7 +237,7 @@ require_once 'includes/header.php';
             <?php foreach ($restaurants_populaires as $r):
                 $isOpen = estRestaurantOuvert($r['heure_ouverture'], $r['heure_fermeture']);
             ?>
-            <a href="/saveur-php/restaurant.php?id=<?php echo $r['id']; ?>" class="group overflow-hidden rounded-3xl bg-[hsl(36_50%_98%)] transition-all duration-300 hover:-translate-y-1 hover:shadow-warm">
+            <a href="<?php echo BASE_URL; ?>restaurant.php?id=<?php echo $r['id']; ?>" class="group overflow-hidden rounded-3xl bg-[hsl(36_50%_98%)] transition-all duration-300 hover:-translate-y-1 hover:shadow-warm">
                 <div class="relative aspect-[4/3] overflow-hidden">
                     <?php echo afficherBanniere(
                         $r['photo_banniere'] ?? null,
@@ -284,7 +286,7 @@ require_once 'includes/header.php';
         <?php else: ?>
         <div class="rounded-2xl bg-[hsl(36_50%_98%)] p-8 text-center">
             <p class="text-[hsl(25_15%_42%)]">Restaurants en cours de chargement...</p>
-            <a href="/saveur-php/restaurants.php" class="mt-4 inline-flex h-11 items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] px-6 text-white font-medium hover:bg-[hsl(14_72%_40%)]">
+            <a href="<?php echo BASE_URL; ?>restaurants.php" class="mt-4 inline-flex h-11 items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] px-6 text-white font-medium hover:bg-[hsl(14_72%_40%)]">
                 Voir tous les restaurants
             </a>
         </div>
@@ -299,7 +301,7 @@ require_once 'includes/header.php';
             <div class="mb-2 text-xs font-semibold uppercase tracking-widest text-[hsl(14_72%_46%)]">Faites-vous plaisir</div>
             <h2 class="font-display text-3xl font-bold text-[hsl(20_30%_14%)] md:text-4xl">Nos plats les plus commandés</h2>
         </div>
-        <a href="/saveur-php/plats.php" class="hidden text-[hsl(14_72%_46%)] hover:underline md:inline-flex items-center gap-1">
+        <a href="<?php echo BASE_URL; ?>plats.php" class="hidden text-[hsl(14_72%_46%)] hover:underline md:inline-flex items-center gap-1">
             Voir tous les plats
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -310,7 +312,7 @@ require_once 'includes/header.php';
     <?php if (!empty($plats_populaires)): ?>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <?php foreach ($plats_populaires as $p): ?>
-        <a href="/saveur-php/restaurant.php?id=<?php echo $p['restaurant_id']; ?>" class="group flex gap-4 rounded-2xl border border-[hsl(30_25%_86%)]/60 bg-[hsl(36_50%_98%)] p-3 transition-all hover:-translate-y-1 hover:shadow-warm hover:border-[hsl(14_72%_46%)]/30">
+        <a href="<?php echo BASE_URL; ?>restaurant.php?id=<?php echo $p['restaurant_id']; ?>" class="group flex gap-4 rounded-2xl border border-[hsl(30_25%_86%)]/60 bg-[hsl(36_50%_98%)] p-3 transition-all hover:-translate-y-1 hover:shadow-warm hover:border-[hsl(14_72%_46%)]/30">
             <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
                 <?php echo afficherImagePlat($p['photo'] ?? null, $p['nom'], 'h-full w-full object-cover transition-transform group-hover:scale-105'); ?>
             </div>
@@ -333,7 +335,7 @@ require_once 'includes/header.php';
         <?php endforeach; ?>
     </div>
     <div class="mt-6 text-center md:hidden">
-        <a href="/saveur-php/plats.php" class="inline-flex h-11 items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] px-6 text-sm font-medium text-white hover:bg-[hsl(14_72%_40%)]">
+        <a href="<?php echo BASE_URL; ?>plats.php" class="inline-flex h-11 items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] px-6 text-sm font-medium text-white hover:bg-[hsl(14_72%_40%)]">
             Voir tous les plats
         </a>
     </div>
@@ -407,14 +409,14 @@ require_once 'includes/header.php';
                 </p>
             </div>
             <div class="flex flex-col gap-3 md:items-end">
-                <a href="/saveur-php/partenaire.php" class="h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-[hsl(38_44%_96%)] px-8 text-base font-semibold text-[hsl(14_72%_46%)] hover:bg-[hsl(38_44%_96%)]/95 transition-colors">
+                <a href="<?php echo BASE_URL; ?>partenaire.php" class="h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-[hsl(38_44%_96%)] px-8 text-base font-semibold text-[hsl(14_72%_46%)] hover:bg-[hsl(38_44%_96%)]/95 transition-colors">
                     Inscrire mon restaurant 
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                 </a>
                 <div class="text-sm text-[hsl(38_60%_97%)]/80">
-                    Déjà partenaire ? <a href="/saveur-php/connexion.php" class="font-semibold underline underline-offset-4 hover:no-underline">Accéder au tableau de bord</a>
+                    Déjà partenaire ? <a href="<?php echo BASE_URL; ?>connexion.php" class="font-semibold underline underline-offset-4 hover:no-underline">Accéder au tableau de bord</a>
                 </div>
             </div>
         </div>

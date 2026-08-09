@@ -2,6 +2,7 @@
 require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
+require_once 'includes/notifications.php';
 $pageTitle = 'Devenir partenaire';
 
 // Données des avantages partenaire
@@ -56,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 
                 $message = "Demande envoyée avec succès ! L'équipe va étudier votre demande.";
+                envoyerEmailConfirmationPartenaire($nom, $proprietaire, $email);
             }
         } catch (PDOException $e) {
             error_log('Erreur partenaire: ' . $e->getMessage());

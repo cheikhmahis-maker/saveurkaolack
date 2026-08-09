@@ -5,14 +5,24 @@
 
 # Désactiver l'exécution de scripts PHP
 <FilesMatch "\.(php|php\.|php3|php4|phtml|pl|py|jsp|asp|sh|cgi)$">
-    Order allow,deny
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
 
 # Empêcher l'accès aux fichiers .htaccess
 <Files .htaccess>
-    Order allow,deny
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </Files>
 
 # Ne pas afficher le contenu des dossiers

@@ -91,7 +91,7 @@ define('UPLOAD_TYPES',      ['image/jpeg', 'image/png', 'image/webp', 'image/gif
 define('UPLOAD_EXTENSIONS', ['jpg', 'jpeg', 'png', 'webp', 'gif']);
 
 // ─── Session ──────────────────────────────────────────────────────────────────
-define('SESSION_DUREE', 1800);
+define('SESSION_DUREE', 7200);
 define('SESSION_NOM',   'saveur_kaolack_session');
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -105,25 +105,34 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
 }
 
-// ─── Base de données ─────────────────────────────────────────────────────────
-// ⚠️  À CHANGER avant mise en ligne : remplacez les valeurs de production
-define('DB_HOST',    'localhost');
-define('DB_NAME',    'saveur_kaolack');
-define('DB_USER',    ENVIRONMENT === 'production' ? 'user_prod'  : 'root');
-define('DB_PASS',    ENVIRONMENT === 'production' ? 'mdp_prod'   : '');
-define('DB_CHARSET', 'utf8mb4');
-
 // ─── Secrets (clés privées) ───────────────────────────────────────────────────
 // Chargé depuis includes/secrets.php — ne jamais mettre les clés ici directement
 if (file_exists(__DIR__ . '/secrets.php')) {
     require_once __DIR__ . '/secrets.php';
 } else {
     // Fichier absent : le site reste opérationnel mais les emails et Wave sont désactivés.
-    // Créer includes/secrets.php avec SMTP_EMAIL, SMTP_PASSWORD, WAVE_API_KEY.
+    // Créer includes/secrets.php avec SMTP_EMAIL, SMTP_PASSWORD, WAVE_API_KEY, DB_USER_PROD, DB_PASS_PROD.
     if (!defined('SMTP_EMAIL'))    define('SMTP_EMAIL',    '');
     if (!defined('SMTP_PASSWORD')) define('SMTP_PASSWORD', '');
-    error_log('[Saveur Kaolack] ATTENTION : includes/secrets.php est introuvable. Emails et paiement Wave désactivés.');
+    if (!defined('DB_USER_PROD'))  define('DB_USER_PROD',  '');
+    if (!defined('DB_PASS_PROD'))  define('DB_PASS_PROD',  '');
+    error_log('[Saveur Kaolack] ATTENTION : includes/secrets.php est introuvable. Emails, paiement Wave et BDD production désactivés.');
 }
+
+// ─── Base de données ─────────────────────────────────────────────────────────
+if ($_is_local) {
+    define('DB_HOST',    'localhost');
+    define('DB_NAME',    'saveur_kaolack');
+    define('DB_USER',    'root');
+    define('DB_PASS',    '');
+} else {
+    // ⚠️ À REMPLIR une fois l'hébergeur de production choisi (host + nom de BDD fournis par l'hébergeur).
+    define('DB_HOST',    'À_DEFINIR');
+    define('DB_NAME',    'À_DEFINIR');
+    define('DB_USER',    DB_USER_PROD);
+    define('DB_PASS',    DB_PASS_PROD);
+}
+define('DB_CHARSET', 'utf8mb4');
 
 // Wave Checkout
 define('WAVE_API_URL', 'https://api.wave.com/v1/checkout/sessions');

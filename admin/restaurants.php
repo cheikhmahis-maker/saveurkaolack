@@ -14,6 +14,7 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
+require_once '../includes/fonctions.php';
 
 // Initialiser variables
 $restaurants = [];
@@ -25,23 +26,25 @@ $succes = '';
 // Connexion BDD
 try {
     $pdo = getDB();
-    
+    assurerSchemaEssai($pdo);
+
     // Compteurs
     $nb_restos_attente = $pdo->query("SELECT COUNT(*) FROM restaurants WHERE statut = 'en_attente'")->fetchColumn();
     $nb_restos_actifs = $pdo->query("SELECT COUNT(*) FROM restaurants WHERE statut = 'actif'")->fetchColumn();
-    
+
     // Recuperer tous les restaurants
     $stmt = $pdo->query("
         SELECT r.id, r.nom, r.adresse, r.quartier, r.telephone, r.email, r.statut, r.created_at,
+               r.essai_debut, r.abonnement_jusquau,
                '-' as prenom, '-' as nom_user, r.telephone as user_telephone,
                cat.nom as categorie_nom
         FROM restaurants r
         LEFT JOIN categories cat ON r.categorie_id = cat.id
-        ORDER BY 
-            CASE r.statut 
-                WHEN 'en_attente' THEN 1 
-                WHEN 'actif' THEN 2 
-                ELSE 3 
+        ORDER BY
+            CASE r.statut
+                WHEN 'en_attente' THEN 1
+                WHEN 'actif' THEN 2
+                ELSE 3
             END,
             r.created_at DESC
     ");
@@ -179,6 +182,7 @@ $date_jour = date('d/m/Y');
                                 <th class="px-4 py-3 text-left font-medium">Contact</th>
                                 <th class="px-4 py-3 text-left font-medium">Quartier</th>
                                 <th class="px-4 py-3 text-left font-medium">Statut</th>
+                                <th class="px-4 py-3 text-left font-medium">Essai / Abonnement</th>
                                 <th class="px-4 py-3 text-left font-medium">Inscrit le</th>
                                 <th class="px-4 py-3 text-left font-medium">Actions</th>
                             </tr>
@@ -194,8 +198,8 @@ $date_jour = date('d/m/Y');
                                 </td>
                                 <td class="px-4 py-3"><?php echo htmlspecialchars($r['prenom'] . ' ' . $r['nom_user']); ?></td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]">
-                                    <div><?php echo $r['telephone'] ?? $r['user_telephone']; ?></div>
-                                    <div class="text-xs"><?php echo $r['email']; ?></div>
+                                    <div><?php echo htmlspecialchars($r['telephone'] ?? $r['user_telephone']); ?></div>
+                                    <div class="text-xs"><?php echo htmlspecialchars($r['email']); ?></div>
                                 </td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($r['quartier'] ?? '-'); ?></td>
                                 <td class="px-4 py-3">
@@ -210,12 +214,38 @@ $date_jour = date('d/m/Y');
                                     ?>
                                     <span class="inline-flex px-2 py-1 text-xs font-medium <?php echo $badge_class; ?> rounded-full capitalize"><?php echo str_replace('_', ' ', $r['statut']); ?></span>
                                 </td>
+                                <td class="px-4 py-3">
+                                    <?php
+                                    $abonneActif = !empty($r['abonnement_jusquau']) && strtotime($r['abonnement_jusquau'] . ' 23:59:59') >= time();
+                                    if ($abonneActif) {
+                                        echo '<span class="text-xs font-medium text-green-700">✓ Abonné jusqu\'au ' . date('d/m/Y', strtotime($r['abonnement_jusquau'])) . '</span>';
+                                    } elseif (empty($r['essai_debut'])) {
+                                        echo '<span class="text-xs text-[hsl(25_15%_42%)]">Pas encore démarré</span>';
+                                    } elseif (restaurantEnRegle($r)) {
+                                        echo '<span class="text-xs font-medium text-amber-600">🎁 ' . joursRestantsEssai($r) . ' j. d\'essai restants</span>';
+                                    } else {
+                                        echo '<span class="text-xs font-medium text-red-600">⛔ Essai terminé</span>';
+                                    }
+                                    ?>
+                                    <div class="mt-1">
+                                        <button onclick="prolongerAbonnement(<?php echo $r['id']; ?>, '<?php echo htmlspecialchars(addslashes($r['nom'])); ?>')" class="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                                            + Abonnement
+                                        </button>
+                                    </div>
+                                </td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo date('d/m/Y', strtotime($r['created_at'])); ?></td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-wrap">
                                         <a href="../restaurant.php?id=<?php echo $r['id']; ?>" target="_blank" class="px-3 py-1.5 bg-[hsl(30_25%_86%)] text-[hsl(25_15%_42%)] text-xs font-medium rounded-lg hover:bg-[hsl(36_30%_92%)] transition-colors">
                                             Voir
                                         </a>
+                                        <button onclick="ouvrirModalEmail(this)"
+                                                data-id="<?php echo $r['id']; ?>"
+                                                data-email="<?php echo htmlspecialchars($r['email'] ?? '', ENT_QUOTES); ?>"
+                                                data-telephone="<?php echo htmlspecialchars($r['telephone'] ?? '', ENT_QUOTES); ?>"
+                                                class="px-3 py-1.5 bg-blue-100 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-200 transition-colors" title="Modifier email et téléphone">
+                                            ✉️ Email
+                                        </button>
                                         <?php if ($r['statut'] === 'en_attente'): ?>
                                         <button onclick="validerRestaurant(<?php echo $r['id']; ?>, 'valider')" class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors">
                                             Valider
@@ -249,6 +279,52 @@ $date_jour = date('d/m/Y');
             
         </div>
     </main>
+</div>
+
+<!-- MODAL MODIFIER EMAIL RESTAURANT -->
+<div id="modal-email" class="fixed inset-0 z-[200] flex items-center justify-center hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50" onclick="fermerModalEmail()"></div>
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="font-display text-lg font-bold text-[hsl(20_30%_14%)]">Modifier les coordonnées</h2>
+            <button onclick="fermerModalEmail()" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div id="modal-email-erreur" class="hidden mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 text-sm"></div>
+        <div id="modal-email-succes" class="hidden mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm"></div>
+
+        <form id="form-modifier-email" onsubmit="soumettreEmail(event)" class="space-y-4">
+            <input type="hidden" id="modal-restaurant-id" name="id">
+
+            <div>
+                <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Email <span class="text-red-500">*</span></label>
+                <input type="email" id="modal-email-input" name="email" required maxlength="150"
+                       class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2.5 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20 text-sm"
+                       placeholder="restaurant@exemple.com">
+                <p class="text-xs text-[hsl(25_15%_42%)] mt-1">Cet email sera utilisé pour la connexion et la récupération de mot de passe.</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Téléphone</label>
+                <input type="tel" id="modal-telephone-input" name="telephone" maxlength="20"
+                       class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2.5 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20 text-sm"
+                       placeholder="77 000 00 00">
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit" id="btn-sauvegarder-email"
+                        class="flex-1 rounded-xl bg-[hsl(14_72%_46%)] px-6 py-2.5 text-white text-sm font-medium hover:bg-[hsl(14_72%_40%)] transition-colors disabled:opacity-60">
+                    Enregistrer
+                </button>
+                <button type="button" onclick="fermerModalEmail()"
+                        class="rounded-xl border border-[hsl(30_25%_86%)] px-6 py-2.5 text-[hsl(25_15%_42%)] text-sm font-medium hover:bg-[hsl(36_30%_92%)] transition-colors">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script src="../assets/js/dashboard_admin.js"></script>
@@ -289,6 +365,89 @@ function changerStatut(restaurantId, nouveauStatut) {
     .catch(err => {
         alert('Erreur lors de l\'opération');
         console.error(err);
+    });
+}
+
+// ─── PROLONGER / ACTIVER ABONNEMENT ───
+function prolongerAbonnement(restaurantId, nomRestaurant) {
+    const jours = prompt(`Activer/prolonger l'abonnement de "${nomRestaurant}" de combien de jours ?`, '30');
+    if (jours === null) return;
+    const n = parseInt(jours, 10);
+    if (!n || n < 1 || n > 365) {
+        alert('Merci d\'entrer un nombre de jours valide (1 à 365).');
+        return;
+    }
+
+    fetch('ajax/restaurant_action.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `action=prolonger_abonnement&id=${restaurantId}&jours=${n}&csrf_token=${encodeURIComponent(CSRF_TOKEN)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) location.reload();
+    })
+    .catch(() => alert('Erreur réseau. Réessayez.'));
+}
+
+// ─── MODAL MODIFIER EMAIL / TELEPHONE ───
+function ouvrirModalEmail(btn) {
+    document.getElementById('modal-restaurant-id').value    = btn.dataset.id;
+    document.getElementById('modal-email-input').value      = btn.dataset.email || '';
+    document.getElementById('modal-telephone-input').value  = btn.dataset.telephone || '';
+    document.getElementById('modal-email-erreur').classList.add('hidden');
+    document.getElementById('modal-email-succes').classList.add('hidden');
+    document.getElementById('modal-email').classList.remove('hidden');
+    document.getElementById('modal-email-input').focus();
+}
+
+function fermerModalEmail() {
+    document.getElementById('modal-email').classList.add('hidden');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fermerModalEmail();
+});
+
+function soumettreEmail(e) {
+    e.preventDefault();
+    const errDiv = document.getElementById('modal-email-erreur');
+    const sucDiv = document.getElementById('modal-email-succes');
+    const btn    = document.getElementById('btn-sauvegarder-email');
+
+    errDiv.classList.add('hidden');
+    sucDiv.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement...';
+
+    const id        = document.getElementById('modal-restaurant-id').value;
+    const email     = document.getElementById('modal-email-input').value.trim();
+    const telephone = document.getElementById('modal-telephone-input').value.trim();
+
+    fetch('ajax/modifier_email_restaurant.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}&telephone=${encodeURIComponent(telephone)}&csrf_token=${encodeURIComponent(CSRF_TOKEN)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            sucDiv.textContent = data.message;
+            sucDiv.classList.remove('hidden');
+            setTimeout(() => { fermerModalEmail(); location.reload(); }, 1200);
+        } else {
+            errDiv.textContent = data.message;
+            errDiv.classList.remove('hidden');
+        }
+    })
+    .catch(() => {
+        errDiv.textContent = 'Erreur réseau. Réessayez.';
+        errDiv.classList.remove('hidden');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Enregistrer';
     });
 }
 

@@ -51,7 +51,7 @@ try {
     $pdo = getDB();
     
     // Vérifier que le restaurant existe et est en attente
-    $stmt = $pdo->prepare("SELECT id, nom, statut FROM restaurants WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, nom, statut, email, telephone FROM restaurants WHERE id = ?");
     $stmt->execute([$restaurant_id]);
     $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -71,14 +71,23 @@ try {
     // Si validation, créer un compte utilisateur pour le restaurant
     $compte_info = '';
     if ($action === 'valider') {
-        // Générer un email et mot de passe
-        $email = 'restaurant' . $restaurant_id . '@saveurkaolack.sn';
+        // Utiliser les vraies coordonnées du restaurant
+        $email = $restaurant['email'];
+        $telephone = $restaurant['telephone'];
         $mot_de_passe = bin2hex(random_bytes(4)); // 8 caractères aléatoires
         $hash = password_hash($mot_de_passe, PASSWORD_DEFAULT);
-        
-        // Créer l'utilisateur
+
+        // Vérifier si un compte existe déjà avec cet email
+        $stmt_check = $pdo->prepare("SELECT id FROM utilisateurs WHERE email = ? LIMIT 1");
+        $stmt_check->execute([$email]);
+        if ($stmt_check->fetch()) {
+            echo json_encode(['success' => false, 'message' => 'Un compte existe déjà avec cet email.']);
+            exit();
+        }
+
+        // Créer l'utilisateur avec les vraies informations
         $stmt = $pdo->prepare("INSERT INTO utilisateurs (nom, prenom, email, telephone, password, role, statut) VALUES (?, ?, ?, ?, ?, 'restaurant', 'actif')");
-        $stmt->execute([$restaurant['nom'], 'Gérant', $email, '770000000', $hash]);
+        $stmt->execute([$restaurant['nom'], 'Gérant', $email, $telephone, $hash]);
         $utilisateur_id = $pdo->lastInsertId();
         
         // Lier l'utilisateur au restaurant

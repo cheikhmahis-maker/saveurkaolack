@@ -343,17 +343,98 @@ function estRestaurantOuvert(string $heureOuverture, string $heureFermeture): bo
     
     list($openH, $openM) = explode(':', $heureOuverture);
     list($closeH, $closeM) = explode(':', $heureFermeture);
-    
+
     $openMinutes = (int)$openH * 60 + (int)$openM;
     $closeMinutes = (int)$closeH * 60 + (int)$closeM;
-    
+
+    // Heures identiques = ouvert en continu (24h/24)
+    if ($openMinutes === $closeMinutes) {
+        return true;
+    }
+
     // Gérer le cas où la fermeture est après minuit
     if ($closeMinutes < $openMinutes) {
         // Le restaurant ferme après minuit
         return $currentMinutes >= $openMinutes || $currentMinutes <= $closeMinutes;
     }
-    
+
     return $currentMinutes >= $openMinutes && $currentMinutes <= $closeMinutes;
+}
+
+/**
+ * =====================================================
+ * ESSAI GRATUIT & ABONNEMENT RESTAURANT
+ * =====================================================
+ * Un restaurant a 45 jours gratuits à partir du jour où il ajoute
+ * son premier plat. Passé ce délai, il faut un abonnement actif
+ * (activé manuellement par l'admin) pour continuer à opérer.
+ */
+
+const DUREE_ESSAI_JOURS = 45;
+
+/** Crée les colonnes essai_debut / abonnement_jusquau si elles n'existent pas encore (déploiement). */
+function assurerSchemaEssai(PDO $pdo): void {
+    try {
+        if (empty($pdo->query("SHOW COLUMNS FROM restaurants LIKE 'essai_debut'")->fetchAll())) {
+            $pdo->exec("ALTER TABLE restaurants ADD COLUMN essai_debut DATE DEFAULT NULL");
+        }
+        if (empty($pdo->query("SHOW COLUMNS FROM restaurants LIKE 'abonnement_jusquau'")->fetchAll())) {
+            $pdo->exec("ALTER TABLE restaurants ADD COLUMN abonnement_jusquau DATE DEFAULT NULL");
+        }
+    } catch (PDOException $e) {
+        // Non bloquant — colonnes peut-être déjà présentes
+    }
+}
+
+/**
+ * Un restaurant est "en règle" s'il n'a pas encore commencé son essai,
+ * s'il est encore dans ses 45 jours gratuits, ou s'il a un abonnement en cours.
+ */
+function restaurantEnRegle(array $restaurant): bool {
+    if (empty($restaurant['essai_debut'])) {
+        return true; // pas encore ajouté de plat : accès complet pour se lancer
+    }
+
+    $finEssai = strtotime($restaurant['essai_debut'] . ' +' . DUREE_ESSAI_JOURS . ' days');
+    if (time() <= $finEssai) {
+        return true;
+    }
+
+    if (!empty($restaurant['abonnement_jusquau']) && time() <= strtotime($restaurant['abonnement_jusquau'] . ' 23:59:59')) {
+        return true;
+    }
+
+    return false;
+}
+
+/** Nombre de jours restants d'essai gratuit. Null si l'essai n'a pas commencé. 0 si terminé. */
+function joursRestantsEssai(array $restaurant): ?int {
+    if (empty($restaurant['essai_debut'])) {
+        return null;
+    }
+    $finEssai = strtotime($restaurant['essai_debut'] . ' +' . DUREE_ESSAI_JOURS . ' days');
+    return max(0, (int) ceil(($finEssai - time()) / 86400));
+}
+
+/** Bandeau HTML à afficher en haut du tableau de bord restaurant (vide si rien à signaler). */
+function bandeauEssaiRestaurant(array $restaurant): string {
+    if (empty($restaurant['essai_debut'])) {
+        return '';
+    }
+
+    $abonneActif = !empty($restaurant['abonnement_jusquau']) && time() <= strtotime($restaurant['abonnement_jusquau'] . ' 23:59:59');
+
+    if ($abonneActif) {
+        $dateFmt = date('d/m/Y', strtotime($restaurant['abonnement_jusquau']));
+        return '<div class="bg-green-50 border-b border-green-200 px-4 py-2 text-center text-sm text-green-700">✓ Abonnement actif jusqu\'au ' . htmlspecialchars($dateFmt) . '</div>';
+    }
+
+    if (!restaurantEnRegle($restaurant)) {
+        return '<div class="bg-red-50 border-b border-red-200 px-4 py-2 text-center text-sm text-red-700 font-medium">⛔ Votre essai gratuit est terminé. Contactez l\'administrateur pour activer votre abonnement et reprendre la gestion de votre restaurant.</div>';
+    }
+
+    $jours = joursRestantsEssai($restaurant);
+    return '<div class="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-700">🎁 Essai gratuit — il vous reste <strong>' . $jours . ' jour' . ($jours > 1 ? 's' : '') . '</strong>.</div>';
 }
 
 /**
@@ -367,10 +448,6 @@ function estRestaurantOuvert(string $heureOuverture, string $heureFermeture): bo
  * @return string Token CSRF
  */
 function genererTokenCSRF(): string {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }

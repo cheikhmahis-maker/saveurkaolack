@@ -44,6 +44,7 @@ if (isset($_GET['add'])) {
     if ($plat) {
         // Vérifier si le panier contient déjà des articles d'un autre restaurant
         $restaurantActuel = null;
+        $firstItem = [];
         if (!empty($_SESSION['cart'])) {
             $firstItem = reset($_SESSION['cart']);
             $restaurantActuel = $firstItem['restaurant_id'] ?? null;
@@ -55,8 +56,8 @@ if (isset($_GET['add'])) {
             $_SESSION['flash_message'] = [
                 'type' => 'info',
                 'titre' => '📢 Changement de restaurant',
-                'message' => 'Votre panier contenait des articles de "' . $firstItem['restaurant_nom'] . '".<br>' .
-                            'Vous avez ajouté un plat de "' . $plat['restaurant_nom'] . '".<br>' .
+                'message' => 'Votre panier contenait des articles de "' . $firstItem['restaurant_nom'] . '".' . "\n" .
+                            'Vous avez ajouté un plat de "' . $plat['restaurant_nom'] . '".' . "\n" .
                             'Votre panier précédent a été remplacé.'
             ];
             // Vider le panier et ajouter le nouveau plat
@@ -77,7 +78,13 @@ if (isset($_GET['add'])) {
             ];
         }
     }
-    setcookie('saveur_cart', json_encode($_SESSION['cart']), time() + 86400, '/');
+    setcookie('saveur_cart', json_encode($_SESSION['cart']), [
+        'expires'  => time() + 86400,
+        'path'     => '/',
+        'secure'   => (ENVIRONMENT === 'production'),
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
     header('Location: panier.php');
     exit;
 }
@@ -93,7 +100,13 @@ if (isset($_GET['update']) && isset($_GET['qty'])) {
             $_SESSION['cart'][$platId]['quantite'] = $quantite;
         }
     }
-    setcookie('saveur_cart', json_encode($_SESSION['cart']), time() + 86400, '/');
+    setcookie('saveur_cart', json_encode($_SESSION['cart']), [
+        'expires'  => time() + 86400,
+        'path'     => '/',
+        'secure'   => (ENVIRONMENT === 'production'),
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
     header('Location: panier.php');
     exit;
 }
@@ -102,7 +115,13 @@ if (isset($_GET['update']) && isset($_GET['qty'])) {
 if (isset($_GET['remove'])) {
     $platId = (int)$_GET['remove'];
     unset($_SESSION['cart'][$platId]);
-    setcookie('saveur_cart', json_encode($_SESSION['cart']), time() + 86400, '/');
+    setcookie('saveur_cart', json_encode($_SESSION['cart']), [
+        'expires'  => time() + 86400,
+        'path'     => '/',
+        'secure'   => (ENVIRONMENT === 'production'),
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
     header('Location: panier.php');
     exit;
 }
@@ -131,16 +150,16 @@ foreach ($items as $item) {
     }
 }
 
-$delivery = !empty($items) ? 1000 : 0;
-$total = $subtotal + $delivery;
-
-// Récupérer le restaurant pour le minimum de commande
+// Récupérer les vrais frais de livraison et le minimum de commande depuis la BDD
 $restaurant = null;
 if ($restaurantId) {
     $stmt = $pdo->prepare("SELECT * FROM restaurants WHERE id = ?");
     $stmt->execute([$restaurantId]);
     $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
 }
+
+$delivery = !empty($items) ? (int) ($restaurant['frais_livraison'] ?? 1000) : 0;
+$total = $subtotal + $delivery;
 
 require_once 'includes/header.php';
 
@@ -178,7 +197,7 @@ if (isset($_SESSION['flash_message'])) {
                     <?php echo htmlspecialchars($flashMessage['titre'], ENT_QUOTES, 'UTF-8'); ?>
                 </h3>
                 <p class="text-blue-800 leading-relaxed">
-                    <?php echo htmlspecialchars($flashMessage['message'], ENT_QUOTES, 'UTF-8'); ?>
+                    <?php echo nl2br(htmlspecialchars($flashMessage['message'], ENT_QUOTES, 'UTF-8')); ?>
                 </p>
                 <div class="mt-4 flex gap-3">
                     <a href="restaurants.php" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
@@ -210,7 +229,7 @@ if (isset($_SESSION['flash_message'])) {
         <p class="mt-2 text-sm text-[hsl(25_15%_42%)]">
             Découvrez nos restaurants et composez votre commande.
         </p>
-        <a href="/saveur-php/restaurants.php" class="mt-6 inline-flex h-12 items-center justify-center rounded-2xl px-6 bg-gradient-warm text-[hsl(38_60%_97%)] font-medium shadow-warm hover:opacity-90 transition-opacity">
+        <a href="<?php echo BASE_URL; ?>restaurants.php" class="mt-6 inline-flex h-12 items-center justify-center rounded-2xl px-6 bg-gradient-warm text-[hsl(38_60%_97%)] font-medium shadow-warm hover:opacity-90 transition-opacity">
             Voir les restaurants
         </a>
     </div>
@@ -232,7 +251,7 @@ if (isset($_SESSION['flash_message'])) {
                         <div class="text-xs text-[hsl(25_15%_42%)]">Restaurant</div>
                         <div class="font-semibold text-[hsl(20_30%_14%)]"><?php echo htmlspecialchars($restaurantNom); ?></div>
                     </div>
-                    <a href="/saveur-php/restaurant.php?id=<?php echo $restaurantId; ?>" class="ml-auto text-sm text-[hsl(14_72%_46%)] hover:underline">
+                    <a href="<?php echo BASE_URL; ?>restaurant.php?id=<?php echo $restaurantId; ?>" class="ml-auto text-sm text-[hsl(14_72%_46%)] hover:underline">
                         Voir le menu →
                     </a>
                 </div>

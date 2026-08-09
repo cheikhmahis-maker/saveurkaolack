@@ -4,7 +4,7 @@
  * INCLUDES/DB.PHP — Connexion base de données PDO
  * Saveur Kaolack
  * =====================================================
- * 
+ * ²
  * Connexion PDO sécurisée avec gestion d'erreurs
  * Inclure APRES config.php
  */

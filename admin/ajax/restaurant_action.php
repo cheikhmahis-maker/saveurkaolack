@@ -45,6 +45,26 @@ try {
             $stmt->execute([$restaurant_id]);
             echo json_encode(['success' => true, 'message' => 'Restaurant suspendu avec succès']);
             break;
+
+        case 'prolonger_abonnement':
+            assurerSchemaEssai($pdo);
+            $jours = intval($_POST['jours'] ?? 0);
+            if ($jours < 1 || $jours > 365) {
+                echo json_encode(['success' => false, 'message' => 'Nombre de jours invalide (1 à 365).']);
+                break;
+            }
+            // Repart de la date de fin actuelle si elle est encore dans le futur, sinon d'aujourd'hui
+            $stmt = $pdo->prepare("
+                UPDATE restaurants
+                SET abonnement_jusquau = DATE_ADD(GREATEST(CURDATE(), COALESCE(abonnement_jusquau, CURDATE())), INTERVAL ? DAY)
+                WHERE id = ?
+            ");
+            $stmt->execute([$jours, $restaurant_id]);
+            $stmt = $pdo->prepare("SELECT abonnement_jusquau FROM restaurants WHERE id = ?");
+            $stmt->execute([$restaurant_id]);
+            $nouvelleDate = $stmt->fetchColumn();
+            echo json_encode(['success' => true, 'message' => "Abonnement actif jusqu'au " . date('d/m/Y', strtotime($nouvelleDate))]);
+            break;
             
         case 'supprimer':
             $pdo->beginTransaction();

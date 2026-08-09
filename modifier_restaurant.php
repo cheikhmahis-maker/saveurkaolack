@@ -43,6 +43,8 @@ try {
         // Vérifier le token CSRF
         if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
             $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";
+        } elseif (!restaurantEnRegle($restaurant)) {
+            $erreur = "Votre essai gratuit est terminé. Contactez l'administrateur pour réactiver votre compte.";
         } else {
         $telephone           = trim($_POST['telephone']           ?? '');
         $email               = trim($_POST['email']               ?? '');

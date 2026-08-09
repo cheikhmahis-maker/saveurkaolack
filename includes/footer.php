@@ -16,16 +16,16 @@
             <div>
                 <div class="mb-3 text-sm font-semibold text-[hsl(20_30%_14%)]">Découvrir</div>
                 <ul class="space-y-2 text-sm text-[hsl(25_15%_42%)]">
-                    <li><a href="/saveur-php/restaurants.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Restaurants</a></li>
-                    <li><a href="/saveur-php/plats.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Plats populaires</a></li>
-                    <li><a href="/saveur-php/suivi.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Suivre une commande</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>restaurants.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Restaurants</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>plats.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Plats populaires</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>suivi.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Suivre une commande</a></li>
                 </ul>
             </div>
             <div>
                 <div class="mb-3 text-sm font-semibold text-[hsl(20_30%_14%)]">Pro</div>
                 <ul class="space-y-2 text-sm text-[hsl(25_15%_42%)]">
-                    <li><a href="/saveur-php/partenaire.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Devenir partenaire</a></li>
-                    <li><a href="/saveur-php/connexion.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Espace restaurant</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>partenaire.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Devenir partenaire</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>connexion.php" class="hover:text-[hsl(20_30%_14%)] transition-colors">Espace restaurant</a></li>
                 </ul>
             </div>
             <div>
@@ -43,6 +43,6 @@
     </footer>
     
     <!-- Assistant Virtuel -->
-    <script src="/saveur-php/assets/js/chatbot.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/chatbot.js"></script>
 </body>
 </html>

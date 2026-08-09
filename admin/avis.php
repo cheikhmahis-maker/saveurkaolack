@@ -13,10 +13,49 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
+require_once '../includes/fonctions.php';
 
 $avis = [];
 $stats = ['total' => 0, 'en_attente' => 0, 'approuve' => 0];
 $erreur = '';
+$succes = '';
+
+// Traitement approbation / rejet
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['avis_id'], $_POST['action'])) {
+    if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
+        $erreur = "Erreur de sécurité. Veuillez réessayer.";
+    } else {
+        $avis_id = (int) $_POST['avis_id'];
+        $action  = $_POST['action'];
+
+        if ($avis_id > 0 && in_array($action, ['approuver', 'rejeter'])) {
+            try {
+                $pdo = getDB();
+                $nouveau_statut = ($action === 'approuver') ? 'approuve' : 'rejete';
+
+                $stmt = $pdo->prepare("UPDATE avis SET statut = ? WHERE id = ?");
+                $stmt->execute([$nouveau_statut, $avis_id]);
+
+                // Recalculer la note moyenne du restaurant
+                if ($action === 'approuver') {
+                    $stmt = $pdo->prepare("
+                        UPDATE restaurants r
+                        SET note_moyenne = (
+                            SELECT ROUND(AVG(note), 1) FROM avis
+                            WHERE restaurant_id = r.id AND statut = 'approuve'
+                        )
+                        WHERE r.id = (SELECT restaurant_id FROM avis WHERE id = ?)
+                    ");
+                    $stmt->execute([$avis_id]);
+                }
+
+                $succes = $action === 'approuver' ? "Avis approuvé et publié." : "Avis rejeté.";
+            } catch (PDOException $e) {
+                $erreur = "Erreur : " . $e->getMessage();
+            }
+        }
+    }
+}
 
 try {
     $pdo = getDB();
@@ -141,7 +180,11 @@ try {
         <div class="p-8 space-y-6">
             
             <?php if ($erreur): ?>
-            <div class="bg-orange-100 border border-orange-200 text-orange-700 px-4 py-3 rounded-xl"><?php echo $erreur; ?></div>
+            <div class="bg-orange-100 border border-orange-200 text-orange-700 px-4 py-3 rounded-xl"><?php echo htmlspecialchars($erreur); ?></div>
+            <?php endif; ?>
+
+            <?php if ($succes): ?>
+            <div class="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-xl"><?php echo htmlspecialchars($succes); ?></div>
             <?php endif; ?>
             
             <?php if (empty($erreur)): ?>
@@ -177,6 +220,7 @@ try {
                                 <th class="px-4 py-3 text-left font-medium">Commentaire</th>
                                 <th class="px-4 py-3 text-left font-medium">Statut</th>
                                 <th class="px-4 py-3 text-left font-medium">Date</th>
+                                <th class="px-4 py-3 text-left font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[hsl(30_25%_86%)]">
@@ -204,6 +248,30 @@ try {
                                     <span class="inline-flex px-2 py-1 text-xs font-medium <?php echo $badge_class; ?> rounded-full capitalize"><?php echo str_replace('_', ' ', $a['statut']); ?></span>
                                 </td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo date('d/m/Y', strtotime($a['created_at'])); ?></td>
+                                <td class="px-4 py-3">
+                                    <?php if ($a['statut'] === 'en_attente'): ?>
+                                    <div class="flex gap-2">
+                                        <form method="POST" class="inline">
+                                            <?php echo champTokenCSRF(); ?>
+                                            <input type="hidden" name="avis_id" value="<?php echo $a['id']; ?>">
+                                            <input type="hidden" name="action" value="approuver">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600 transition-colors">
+                                                ✓ Approuver
+                                            </button>
+                                        </form>
+                                        <form method="POST" class="inline" onsubmit="return confirm('Rejeter cet avis ?')">
+                                            <?php echo champTokenCSRF(); ?>
+                                            <input type="hidden" name="avis_id" value="<?php echo $a['id']; ?>">
+                                            <input type="hidden" name="action" value="rejeter">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors">
+                                                ✗ Rejeter
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <?php else: ?>
+                                    <span class="text-xs text-[hsl(25_15%_42%)]">—</span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>

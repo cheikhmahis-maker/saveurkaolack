@@ -34,6 +34,8 @@ try {
         // Vérifier le token CSRF
         if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
             $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";
+        } elseif (!restaurantEnRegle($restaurant)) {
+            $erreur = "Votre essai gratuit est terminé. Contactez l'administrateur pour réactiver votre compte.";
         } else {
         $commande_id = intval($_POST['commande_id']);
         $statuts_valides = ['en_attente', 'en_preparation', 'en_livraison', 'livree', 'annulee'];
