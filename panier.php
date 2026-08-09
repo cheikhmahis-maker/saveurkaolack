@@ -34,10 +34,11 @@ $pdo = getDB();
 // Ajouter un plat au panier
 if (isset($_GET['add'])) {
     $platId = (int)$_GET['add'];
-    $stmt = $pdo->prepare("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id 
-                          FROM plats p 
-                          JOIN restaurants r ON p.restaurant_id = r.id 
-                          WHERE p.id = ?");
+    $stmt = $pdo->prepare("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id
+                          FROM plats p
+                          JOIN restaurants r ON p.restaurant_id = r.id
+                          WHERE p.id = ? AND r.statut = 'actif'
+                            AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))");
     $stmt->execute([$platId]);
     $plat = $stmt->fetch(PDO::FETCH_ASSOC);
     

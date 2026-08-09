@@ -14,22 +14,31 @@ $dishes = [];
 try {
     $pdo = getDB();
     
-    // Récupérer les catégories
-    $stmt = $pdo->query("SELECT DISTINCT categorie FROM plats WHERE disponible = 1 ORDER BY categorie");
+    // Récupérer les catégories (uniquement des restaurants actifs, en essai ou abonnés)
+    $stmt = $pdo->query("SELECT DISTINCT p.categorie
+                        FROM plats p
+                        JOIN restaurants r ON p.restaurant_id = r.id
+                        WHERE p.disponible = 1
+                          AND r.statut = 'actif'
+                          AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))
+                        ORDER BY p.categorie");
     $categories = array_merge(['Tout'], $stmt->fetchAll(PDO::FETCH_COLUMN));
     
-    // Récupérer les plats
+    // Récupérer les plats (uniquement des restaurants actifs, en essai ou abonnés)
+    $filtreRestaurant = "r.statut = 'actif'
+        AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))";
+
     if ($activeCategory === 'Tout') {
-        $stmt = $pdo->query("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id 
-                            FROM plats p 
-                            JOIN restaurants r ON p.restaurant_id = r.id 
-                            WHERE p.disponible = 1 
+        $stmt = $pdo->query("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id
+                            FROM plats p
+                            JOIN restaurants r ON p.restaurant_id = r.id
+                            WHERE p.disponible = 1 AND {$filtreRestaurant}
                             ORDER BY p.categorie, p.nom");
     } else {
-        $stmt = $pdo->prepare("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id 
-                            FROM plats p 
-                            JOIN restaurants r ON p.restaurant_id = r.id 
-                            WHERE p.disponible = 1 AND p.categorie = ?
+        $stmt = $pdo->prepare("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id
+                            FROM plats p
+                            JOIN restaurants r ON p.restaurant_id = r.id
+                            WHERE p.disponible = 1 AND p.categorie = ? AND {$filtreRestaurant}
                             ORDER BY p.nom");
         $stmt->execute([$activeCategory]);
     }
