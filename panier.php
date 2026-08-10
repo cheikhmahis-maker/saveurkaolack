@@ -30,6 +30,7 @@ if (empty($_SESSION['cart']) && !empty($_COOKIE['saveur_cart'])) {
 
 // Connexion BDD pour récupérer les infos des plats
 $pdo = getDB();
+assurerSchemaEssai($pdo);
 
 // Ajouter un plat au panier
 if (isset($_GET['add'])) {

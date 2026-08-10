@@ -46,6 +46,7 @@ if (empty($messageOriginal)) {
 // === CONNEXION BDD ===
 try {
     $pdo = getDB();
+    assurerSchemaEssai($pdo);
 } catch (PDOException $e) {
     echo json_encode(['reply' => 'Désolé, je ne peux pas accéder aux informations pour le moment.']);
     exit;
@@ -72,7 +73,10 @@ function construireContexteBDD(PDO $pdo): string {
     try {
         $stmt = $pdo->prepare("
             SELECT id, nom, quartier, delai_livraison_min, delai_livraison_max, frais_livraison
-            FROM restaurants WHERE statut = 'actif' ORDER BY nom LIMIT 10
+            FROM restaurants
+            WHERE statut = 'actif'
+              AND (essai_debut IS NULL OR DATE_ADD(essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (abonnement_jusquau IS NOT NULL AND abonnement_jusquau >= CURDATE()))
+            ORDER BY nom LIMIT 10
         ");
         $stmt->execute();
         $restos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -91,6 +95,7 @@ function construireContexteBDD(PDO $pdo): string {
             FROM plats p
             JOIN restaurants r ON p.restaurant_id = r.id
             WHERE p.disponible = 1 AND r.statut = 'actif'
+              AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))
             ORDER BY p.est_populaire DESC, p.prix ASC
             LIMIT 20
         ");

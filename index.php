@@ -18,7 +18,8 @@ $pageTitle = 'Accueil';
 // Récupérer données depuis la BDD
 try {
     $pdo = getDB();
-    
+    assurerSchemaEssai($pdo);
+
     // Catégories
     $stmt = $pdo->query("SELECT * FROM categories ORDER BY ordre_affichage LIMIT 6");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);

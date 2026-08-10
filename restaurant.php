@@ -28,7 +28,8 @@ if ($restaurant_id <= 0) {
 
 try {
     $pdo = getDB();
-    
+    assurerSchemaEssai($pdo);
+
     // Récupérer le restaurant
     $stmt = $pdo->prepare("
         SELECT r.*, c.nom as categorie_nom, c.icone 

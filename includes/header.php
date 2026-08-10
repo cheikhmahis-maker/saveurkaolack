@@ -139,6 +139,7 @@ $links = [
         </div>
     </header>
     <?php if (($_SESSION['role'] ?? '') === 'restaurant' && isset($pdo) && $pdo instanceof PDO):
+        assurerSchemaEssai($pdo);
         $stmt_bandeau = $pdo->prepare("SELECT essai_debut, abonnement_jusquau FROM restaurants WHERE utilisateur_id = ? LIMIT 1");
         $stmt_bandeau->execute([$_SESSION['id']]);
         $restaurant_bandeau = $stmt_bandeau->fetch(PDO::FETCH_ASSOC);

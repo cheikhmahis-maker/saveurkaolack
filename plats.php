@@ -13,7 +13,8 @@ $dishes = [];
 // Connexion BDD
 try {
     $pdo = getDB();
-    
+    assurerSchemaEssai($pdo);
+
     // Récupérer les catégories (uniquement des restaurants actifs, en essai ou abonnés)
     $stmt = $pdo->query("SELECT DISTINCT p.categorie
                         FROM plats p

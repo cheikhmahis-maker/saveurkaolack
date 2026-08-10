@@ -95,6 +95,7 @@ function genererNumeroTracking(): string {
 
 try {
     $pdo = getDB();
+    assurerSchemaEssai($pdo);
 
     // Revalider les prix depuis la BDD
     $plat_ids     = array_column($items, 'id');

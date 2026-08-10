@@ -41,6 +41,7 @@ $waveDisponible = false;
 
 try {
     $pdo = getDB();
+    assurerSchemaEssai($pdo);
     if ($restaurantId) {
         $stmt = $pdo->prepare("SELECT * FROM restaurants WHERE id = ? LIMIT 1");
         $stmt->execute([$restaurantId]);
@@ -50,6 +51,13 @@ try {
     }
 } catch (PDOException $e) {
     // Variables déjà initialisées à leurs valeurs par défaut ci-dessus
+}
+
+// Revalider que le restaurant est toujours disponible (a pu changer depuis l'ajout au panier)
+if (!$restaurant || $restaurant['statut'] !== 'actif' || !restaurantEnRegle($restaurant)) {
+    $_SESSION['erreur_commande'] = "Ce restaurant n'est plus disponible. Veuillez choisir un autre restaurant.";
+    header('Location: panier.php');
+    exit();
 }
 
 // Mode : membre connecté ou invité (sans compte)

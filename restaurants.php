@@ -13,7 +13,8 @@ $pageTitle = 'Restaurants';
 // Connexion BDD et récupération des restaurants
 try {
     $pdo = getDB();
-    
+    assurerSchemaEssai($pdo);
+
     // Récupérer les catégories pour le filtre
     $stmt = $pdo->query("SELECT * FROM categories ORDER BY ordre_affichage");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
