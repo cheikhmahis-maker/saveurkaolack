@@ -360,7 +360,7 @@ require_once 'includes/header.php';
                         <div class="text-xs text-[hsl(25_15%_42%)]">x<?php echo $item['quantite']; ?></div>
                     </div>
                     <div class="text-sm font-semibold">
-                        <?php echo number_format($item['prix'] * $item['quantite'], 0, ',', ' '); ?> F
+                        <?php echo number_format($item['prix'] * $item['quantite'], 0, ',', ' '); ?> F
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -372,12 +372,12 @@ require_once 'includes/header.php';
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between text-[hsl(25_15%_42%)]">
                     <span>Sous-total (<?php echo $nbArticles; ?> article<?php echo $nbArticles > 1 ? 's' : ''; ?>)</span>
-                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($subtotal, 0, ',', ' '); ?> F</span>
+                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($subtotal, 0, ',', ' '); ?> F</span>
                 </div>
                 <div class="flex justify-between text-[hsl(25_15%_42%)]">
                     <span>Livraison</span>
                     <span class="<?php echo $delivery > 0 ? 'text-[hsl(20_30%_14%)]' : 'text-green-600 font-medium'; ?>">
-                        <?php echo $delivery > 0 ? number_format($delivery, 0, ',', ' ') . ' F' : 'Gratuite'; ?>
+                        <?php echo $delivery > 0 ? number_format($delivery, 0, ',', ' ') . ' F' : 'Gratuite'; ?>
                     </span>
                 </div>
             </div>
@@ -387,7 +387,7 @@ require_once 'includes/header.php';
             <div class="flex items-baseline justify-between">
                 <span class="font-semibold text-[hsl(20_30%_14%)]">Total</span>
                 <span class="font-display text-2xl font-bold text-[hsl(14_72%_46%)]">
-                    <?php echo number_format($total, 0, ',', ' '); ?> F
+                    <?php echo number_format($total, 0, ',', ' '); ?> F
                 </span>
             </div>
             
@@ -508,7 +508,7 @@ require_once 'includes/header.php';
         <div class="shrink-0">
             <div class="text-xs text-[hsl(25_15%_42%)]">Total à payer</div>
             <div class="font-display text-xl font-bold text-[hsl(14_72%_46%)]">
-                <?php echo number_format($total, 0, ',', ' '); ?> F
+                <?php echo number_format($total, 0, ',', ' '); ?> F
             </div>
         </div>
         <button type="button" id="btn-commander-mobile"

@@ -194,7 +194,7 @@ require_once 'includes/header.php';
                             </div>
                             <div class="flex items-center gap-2 text-[hsl(25_15%_42%)]">
                                 <span>💰</span>
-                                <span class="font-medium"><?php echo number_format($commande['total'], 0, ',', ' '); ?> FCFA</span>
+                                <span class="font-medium"><?php echo number_format($commande['total'], 0, ',', ' '); ?> FCFA</span>
                             </div>
                         </div>
                     </div>

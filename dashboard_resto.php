@@ -278,7 +278,7 @@ require_once 'includes/header.php';
                         </span>
                     </div>
                     <div class="flex items-center justify-between text-sm">
-                        <span class="font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</span>
+                        <span class="font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</span>
                         <span class="text-xs text-[hsl(25_15%_42%)] font-mono"><?php echo $cmd['numero_tracking']; ?></span>
                     </div>
                 </div>
@@ -310,7 +310,7 @@ require_once 'includes/header.php';
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-medium text-[hsl(20_30%_14%)] truncate"><?php echo htmlspecialchars($plat['nom']); ?></div>
-                        <div class="text-sm text-[hsl(25_15%_42%)]"><?php echo number_format($plat['prix'], 0, ',', ' '); ?> F</div>
+                        <div class="text-sm text-[hsl(25_15%_42%)]"><?php echo number_format($plat['prix'], 0, ',', ' '); ?> F</div>
                     </div>
                     <div class="flex items-center gap-1">
                         <span class="rounded-full px-2 py-1 text-xs <?php echo $plat['disponible'] ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'; ?>">

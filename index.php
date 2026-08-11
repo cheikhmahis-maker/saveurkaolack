@@ -287,7 +287,7 @@ require_once 'includes/header.php';
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        Min <?php echo number_format($r['commande_minimum'], 0, ',', ' '); ?> F
+                        Min <?php echo number_format($r['commande_minimum'], 0, ',', ' '); ?> F
                     </div>
                 </div>
             </a>
@@ -332,7 +332,7 @@ require_once 'includes/header.php';
                     <div class="text-xs text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($p['restaurant_nom']); ?></div>
                 </div>
                 <div class="flex items-center justify-between">
-                    <div class="font-display text-lg font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($p['prix'], 0, ',', ' '); ?> F</div>
+                    <div class="font-display text-lg font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($p['prix'], 0, ',', ' '); ?> F</div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-[hsl(14_72%_46%)]/10 px-2 py-1 text-xs font-medium text-[hsl(14_72%_46%)]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

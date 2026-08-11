@@ -136,7 +136,7 @@ try {
     // Vérifier le minimum de commande côté serveur
     $total_sans_frais = $total - $frais_livraison;
     if ($commande_minimum > 0 && $total_sans_frais < $commande_minimum) {
-        $_SESSION['erreur_commande'] = "Le montant minimum de commande est de " . number_format($commande_minimum, 0, ',', ' ') . " FCFA (hors frais de livraison).";
+        $_SESSION['erreur_commande'] = "Le montant minimum de commande est de " . number_format($commande_minimum, 0, ',', ' ') . " FCFA (hors frais de livraison).";
         header('Location: checkout.php');
         exit();
     }

@@ -287,7 +287,7 @@ if (!empty($_SESSION['erreur_commande'])) {
                     <div class="font-display font-bold text-[hsl(20_30%_14%)]"><?php echo htmlspecialchars($item['nom']); ?></div>
                     <div class="text-xs text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($restaurantNom ?? ''); ?></div>
                     <div class="mt-1 font-semibold text-[hsl(14_72%_46%)]">
-                        <?php echo number_format($item['prix'], 0, ',', ' '); ?> F
+                        <?php echo number_format($item['prix'], 0, ',', ' '); ?> F
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -334,11 +334,11 @@ if (!empty($_SESSION['erreur_commande'])) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <p class="text-sm font-medium">
-                        Minimum de commande : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
+                        Minimum de commande : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
                     </p>
                 </div>
                 <p class="text-xs text-[hsl(25_15%_42%)] mt-2">
-                    Il vous manque <?php echo number_format($restaurant['commande_minimum'] - $subtotal, 0, ',', ' '); ?> F pour valider
+                    Il vous manque <?php echo number_format($restaurant['commande_minimum'] - $subtotal, 0, ',', ' '); ?> F pour valider
                 </p>
             </div>
             <?php endif; ?>
@@ -350,18 +350,18 @@ if (!empty($_SESSION['erreur_commande'])) {
             <div class="mt-4 space-y-2 text-sm">
                 <div class="flex justify-between text-[hsl(25_15%_42%)]">
                     <span>Sous-total (<?php echo $nbArticles; ?> article<?php echo $nbArticles > 1 ? 's' : ''; ?>)</span>
-                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($subtotal, 0, ',', ' '); ?> F</span>
+                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($subtotal, 0, ',', ' '); ?> F</span>
                 </div>
                 <div class="flex justify-between text-[hsl(25_15%_42%)]">
                     <span>Livraison</span>
-                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($delivery, 0, ',', ' '); ?> F</span>
+                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($delivery, 0, ',', ' '); ?> F</span>
                 </div>
             </div>
             <div class="my-4 h-px bg-[hsl(30_25%_86%)]"></div>
             <div class="flex items-baseline justify-between">
                 <span class="font-semibold text-[hsl(20_30%_14%)]">Total</span>
                 <span class="font-display text-2xl font-bold text-[hsl(14_72%_46%)]">
-                    <?php echo number_format($total, 0, ',', ' '); ?> F
+                    <?php echo number_format($total, 0, ',', ' '); ?> F
                 </span>
             </div>
             <!-- Bouton de commande : Connexion obligatoire -->
@@ -387,7 +387,7 @@ if (!empty($_SESSION['erreur_commande'])) {
                         <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
-                        Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
+                        Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
                     </button>
                     <?php endif; ?>
                 <?php else: ?>
@@ -403,7 +403,7 @@ if (!empty($_SESSION['erreur_commande'])) {
                     <?php else: ?>
                     <button disabled
                             class="flex h-12 w-full items-center justify-center rounded-2xl bg-[hsl(30_25%_86%)] text-[hsl(25_15%_42%)] text-base font-medium cursor-not-allowed">
-                        Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
+                        Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
                     </button>
                     <?php endif; ?>
 
@@ -440,7 +440,7 @@ if (!empty($_SESSION['erreur_commande'])) {
         <div class="shrink-0">
             <div class="text-xs text-[hsl(25_15%_42%)]">Total</div>
             <div class="font-display text-xl font-bold text-[hsl(14_72%_46%)]">
-                <?php echo number_format($total, 0, ',', ' '); ?> F
+                <?php echo number_format($total, 0, ',', ' '); ?> F
             </div>
         </div>
         <?php if ($barMinAtteint): ?>
@@ -450,7 +450,7 @@ if (!empty($_SESSION['erreur_commande'])) {
         </a>
         <?php else: ?>
         <div class="flex flex-1 h-12 items-center justify-center rounded-2xl bg-[hsl(30_25%_86%)] text-[hsl(25_15%_42%)] font-medium text-sm cursor-not-allowed">
-            Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
+            Minimum : <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
         </div>
         <?php endif; ?>
     </div>

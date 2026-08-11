@@ -217,8 +217,8 @@ function afficherEtoiles(float $note, string $taille = 'md'): string {
  */
 function formaterPrix(float|int $montant, bool $symbole = true): string {
     $montant = max(0, $montant);
-    $formate = number_format($montant, 0, ',', ' '); // Espace comme séparateur de milliers
-    return $symbole ? $formate . ' FCFA' : $formate;
+    $formate = number_format($montant, 0, ',', ' '); // Espace comme séparateur de milliers
+    return $symbole ? $formate . ' FCFA' : $formate;
 }
 
 /**
@@ -713,7 +713,7 @@ function envoyerEmailConfirmation(string $emailDestinataire, string $prenom, str
     // Construire le resume des articles
     $articlesTexte = "";
     foreach ($items as $item) {
-        $articlesTexte .= "- {$item['nom']} x{$item['quantite']} = " . number_format($item['prix'] * $item['quantite'], 0, ',', ' ') . " FCFA\n";
+        $articlesTexte .= "- {$item['nom']} x{$item['quantite']} = " . number_format($item['prix'] * $item['quantite'], 0, ',', ' ') . " FCFA\n";
     }
     
     // URL de suivi
@@ -723,7 +723,7 @@ function envoyerEmailConfirmation(string $emailDestinataire, string $prenom, str
     $sujet = "Confirmation commande #{$numeroTracking} - Saveur Kaolack";
     
     // Formater le total pour l'email
-    $totalFormate = number_format($total, 0, ',', ' ');
+    $totalFormate = number_format($total, 0, ',', ' ');
     
     // Message HTML
     $messageHtml = <<<HTML
@@ -771,7 +771,7 @@ HTML;
     $messageTexte .= "Votre commande est confirmée !\n\n";
     $messageTexte .= "N° de commande : {$numeroTracking}\n";
     $messageTexte .= "Restaurant : {$restaurantNom}\n";
-    $messageTexte .= "Total : " . number_format($total, 0, ',', ' ') . " FCFA\n\n";
+    $messageTexte .= "Total : " . number_format($total, 0, ',', ' ') . " FCFA\n\n";
     $messageTexte .= "Détail :\n{$articlesTexte}\n";
     $messageTexte .= "Suivre votre commande : {$urlSuivi}\n\n";
     $messageTexte .= "Gardez ce email pour retrouver votre numéro de commande.\n";

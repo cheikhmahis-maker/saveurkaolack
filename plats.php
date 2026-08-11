@@ -95,7 +95,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <div class="font-display text-lg font-bold text-[hsl(14_72%_46%)]">
-                        <?php echo number_format($d['prix'], 0, ',', ' '); ?> F
+                        <?php echo number_format($d['prix'], 0, ',', ' '); ?> F
                     </div>
                     <a href="panier.php?add=<?php echo $d['id']; ?>" class="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] text-[hsl(38_60%_97%)] shadow-warm hover:bg-[hsl(14_72%_40%)] transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

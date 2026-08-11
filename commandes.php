@@ -217,12 +217,12 @@ require_once 'includes/header.php';
                             if (!empty($details_commande)) {
                                 foreach ($details_commande as $detail) {
                                     $message .= "• " . $detail['quantite'] . "x " . $detail['plat_nom'];
-                                    $message .= " - " . number_format($detail['prix_unitaire'], 0, ',', ' ') . " FCFA\n";
+                                    $message .= " - " . number_format($detail['prix_unitaire'], 0, ',', ' ') . " FCFA\n";
                                 }
                             }
 
                             $message .= "\n━━━━━━━━━━━━━━━━━━\n";
-                            $message .= "💰 *TOTAL : " . number_format($cmd['total'], 0, ',', ' ') . " FCFA*\n";
+                            $message .= "💰 *TOTAL : " . number_format($cmd['total'], 0, ',', ' ') . " FCFA*\n";
                             $message .= "━━━━━━━━━━━━━━━━━━\n\n";
 
                             // Adresse
@@ -283,7 +283,7 @@ require_once 'includes/header.php';
                 <!-- Colonne Total -->
                 <div>
                     <div class="text-sm text-[hsl(25_15%_42%)]">Total commande</div>
-                    <div class="font-display text-xl font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</div>
+                    <div class="font-display text-xl font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</div>
                     <div class="mt-1 text-xs text-[hsl(25_15%_42%)]">
                         N°: <?php echo htmlspecialchars($cmd['numero_tracking'] ?? 'N/A'); ?>
                     </div>

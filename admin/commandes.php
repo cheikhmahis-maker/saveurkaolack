@@ -181,7 +181,7 @@ try {
                                 <td class="px-4 py-3 font-medium">#<?php echo $cmd['id']; ?></td>
                                 <td class="px-4 py-3"><?php echo htmlspecialchars($cmd['client_nom']); ?></td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($cmd['resto_nom']); ?></td>
-                                <td class="px-4 py-3 font-medium"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</td>
+                                <td class="px-4 py-3 font-medium"><?php echo number_format($cmd['total'], 0, ',', ' '); ?> F</td>
                                 <td class="px-4 py-3">
                                     <?php
                                     $badge_class = match($cmd['statut']) {

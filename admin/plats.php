@@ -180,7 +180,7 @@ try {
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($p['resto_nom']); ?></td>
-                                <td class="px-4 py-3 font-medium"><?php echo number_format($p['prix'], 0, ',', ' '); ?> F</td>
+                                <td class="px-4 py-3 font-medium"><?php echo number_format($p['prix'], 0, ',', ' '); ?> F</td>
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($p['categorie'] ?? '-'); ?></td>
                                 <td class="px-4 py-3">
                                     <?php if ($p['disponible']): ?>

@@ -49,7 +49,7 @@ function envoyerEmailRestaurant(
 
     $lignes_plats = '';
     foreach ($items as $item) {
-        $sous_total    = number_format(($item['prix'] ?? 0) * ($item['quantite'] ?? 1), 0, ',', ' ');
+        $sous_total    = number_format(($item['prix'] ?? 0) * ($item['quantite'] ?? 1), 0, ',', ' ');
         $nom_plat      = htmlspecialchars($item['nom'] ?? '');
         $lignes_plats .= "<tr>
             <td style='padding:7px 12px;border-bottom:1px solid #f0e8df;'>{$nom_plat}</td>
@@ -58,7 +58,7 @@ function envoyerEmailRestaurant(
         </tr>";
     }
 
-    $total_fmt      = number_format($total, 0, ',', ' ');
+    $total_fmt      = number_format($total, 0, ',', ' ');
     $paiement_label = ($mode_paiement === 'wave') ? 'Wave (paiement en ligne)' : 'Espèces à la livraison';
     $quartier_txt   = $quartier ? " — " . htmlspecialchars($quartier) : '';
     $notes_html     = $notes
@@ -383,7 +383,7 @@ function buildMessageTelegram(
         $lignes .= "  • " . htmlspecialchars($item['nom'] ?? '') . " ×" . intval($item['quantite'] ?? 1) . "\n";
     }
 
-    $total_fmt    = number_format($total, 0, ',', ' ');
+    $total_fmt    = number_format($total, 0, ',', ' ');
     $paiement_ico = ($mode_paiement === 'wave') ? '💳 Wave' : '💵 Espèces';
     $quartier_txt = $quartier ? "\n📍 <b>Quartier :</b> " . htmlspecialchars($quartier) : '';
     $notes_txt    = $notes    ? "\n💬 <b>Note :</b> " . htmlspecialchars($notes)    : '';

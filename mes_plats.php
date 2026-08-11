@@ -271,7 +271,7 @@ require_once 'includes/header.php';
                                     </div>
                                     <p class="text-sm text-[hsl(25_15%_42%)] line-clamp-2"><?php echo htmlspecialchars($plat['description']); ?></p>
                                     <div class="mt-2 flex items-center gap-4">
-                                        <span class="font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($plat['prix'], 0, ',', ' '); ?> F</span>
+                                        <span class="font-bold text-[hsl(14_72%_46%)]"><?php echo number_format($plat['prix'], 0, ',', ' '); ?> F</span>
                                         <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded"><?php echo htmlspecialchars($plat['categorie']); ?></span>
                                     </div>
                                 </div>
