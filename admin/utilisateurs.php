@@ -50,7 +50,7 @@ try {
 
 <div class="min-h-screen bg-[hsl(38_44%_96%)]">
     
-    <aside class="fixed left-0 top-0 h-full w-64 bg-[hsl(20_30%_14%)] text-white z-50 overflow-y-auto">
+    <aside id="admin-sidebar" class="fixed left-0 top-0 h-full w-64 bg-[hsl(20_30%_14%)] text-white z-50 overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="p-6 border-b border-white/10">
             <div class="font-display text-xl font-bold text-[hsl(14_72%_46%)]">Saveur Kaolack</div>
             <div class="text-xs text-white/60 mt-1">Panel Administration</div>
@@ -99,19 +99,31 @@ try {
             </div>
         </nav>
     </aside>
-    
-    <main class="ml-64">
+    <div id="admin-sidebar-overlay" onclick="toggleAdminSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"></div>
+    <script>
+    function toggleAdminSidebar() {
+        document.getElementById('admin-sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('admin-sidebar-overlay').classList.toggle('hidden');
+    }
+    </script>
+
+    <main class="lg:ml-64">
         <header class="bg-white border-b border-[hsl(30_25%_86%)] px-8 py-4">
             <div class="flex items-center justify-between">
-                <div>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleAdminSidebar()" class="lg:hidden p-2 -ml-2 text-[hsl(20_30%_14%)]">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <div>
                     <h1 class="font-display text-2xl font-bold text-[hsl(20_30%_14%)]">Gestion des Clients</h1>
                     <p class="text-sm text-[hsl(25_15%_42%)]"><?php echo date('d/m/Y'); ?></p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-[hsl(14_72%_46%)] text-white flex items-center justify-center font-medium">
                         <?php echo substr($_SESSION['prenom'] ?? 'A', 0, 1); ?>
                     </div>
-                    <div class="text-sm">
+                    <div class="text-sm hidden sm:block">
                         <div class="font-medium text-[hsl(20_30%_14%)]"><?php echo htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']); ?></div>
                         <div class="text-[hsl(25_15%_42%)]">Administrateur</div>
                     </div>
