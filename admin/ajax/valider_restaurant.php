@@ -67,7 +67,7 @@ try {
     }
     
     // Déterminer le nouveau statut
-    $nouveau_statut = ($action === 'valider') ? 'actif' : 'suspendu';
+    $nouveau_statut = ($action === 'valider') ? 'actif' : 'refuse';
     
     // Si validation, créer un compte utilisateur pour le restaurant
     $compte_info = '';
