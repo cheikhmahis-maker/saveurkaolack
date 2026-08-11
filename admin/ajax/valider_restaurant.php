@@ -15,6 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once '../../includes/config.php';
 require_once '../../includes/db.php';
 require_once '../../includes/fonctions.php';
+require_once '../../includes/notifications.php';
 
 // Vérifier que l'utilisateur est admin
 if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
@@ -93,8 +94,13 @@ try {
         // Lier l'utilisateur au restaurant
         $stmt = $pdo->prepare("UPDATE restaurants SET utilisateur_id = ? WHERE id = ?");
         $stmt->execute([$utilisateur_id, $restaurant_id]);
-        
-        $compte_info = " | Login: $email | Mot de passe: $mot_de_passe";
+
+        // Envoyer les identifiants par email au restaurant
+        $email_envoye = envoyerEmailIdentifiantsRestaurant($restaurant['nom'], $email, $mot_de_passe);
+
+        $compte_info = $email_envoye
+            ? " | Identifiants envoyés par email à $email"
+            : " | ⚠️ Email non envoyé — transmettez-les manuellement : Login: $email | Mot de passe: $mot_de_passe";
     }
     
     // Mettre à jour le statut

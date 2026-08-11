@@ -238,6 +238,92 @@ HTML;
 }
 
 /**
+ * Envoie les identifiants de connexion à un restaurant venant d'être validé
+ */
+function envoyerEmailIdentifiantsRestaurant(
+    string $nom_resto,
+    string $email_resto,
+    string $mot_de_passe
+): bool {
+    if (empty($email_resto) || !filter_var($email_resto, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    $nom_safe = htmlspecialchars($nom_resto);
+    $url_connexion = BASE_URL . 'connexion.php';
+
+    $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;background:#f9f5f0;">
+<div style="max-width:600px;margin:24px auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e8d5c4;">
+
+    <div style="background:#c0392b;padding:20px 24px;">
+        <h2 style="margin:0;color:#fff;font-size:22px;">🎉 Bienvenue sur Saveur Kaolack !</h2>
+        <p style="margin:4px 0 0;color:#fff;opacity:.85;font-size:14px;">Votre restaurant a été validé</p>
+    </div>
+
+    <div style="padding:24px;">
+        <p style="font-size:16px;">Bonjour,</p>
+        <p>Votre restaurant <strong>{$nom_safe}</strong> est maintenant en ligne. Voici vos identifiants pour gérer votre menu et vos commandes :</p>
+
+        <div style="background:#fff8f5;border:1px solid #e8d5c4;border-radius:8px;padding:16px 18px;margin:20px 0;">
+            <p style="margin:0 0 8px;"><strong>Email :</strong> {$email_resto}</p>
+            <p style="margin:0;"><strong>Mot de passe :</strong> <span style="font-family:monospace;background:#f0e8df;padding:2px 8px;border-radius:4px;">{$mot_de_passe}</span></p>
+        </div>
+
+        <p style="text-align:center;margin:24px 0;">
+            <a href="{$url_connexion}" style="display:inline-block;background:#c0392b;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:bold;">Me connecter</a>
+        </p>
+
+        <p style="color:#555;font-size:14px;">Vous avez 45 jours d'essai gratuit à partir de l'ajout de votre premier plat. Pensez à changer votre mot de passe après votre première connexion.</p>
+        <p style="color:#555;margin-bottom:0;">L'équipe <strong>Saveur Kaolack</strong></p>
+    </div>
+
+    <div style="padding:12px 24px;background:#f9f5f0;border-top:1px solid #f0e8df;text-align:center;font-size:12px;color:#aaa;">
+        Saveur Kaolack — Notification automatique
+    </div>
+</div>
+</body>
+</html>
+HTML;
+
+    $sujet = "🎉 Votre restaurant est validé — vos identifiants Saveur Kaolack";
+
+    $phpmailerPath = __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+    if (file_exists($phpmailerPath)) {
+        try {
+            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
+            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
+            $mail             = new PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
+            $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
+            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            $mail->CharSet    = 'UTF-8';
+            $mail->setFrom('noreply@saveurkaolack.sn', 'Saveur Kaolack');
+            $mail->addAddress($email_resto, $nom_resto);
+            $mail->Subject    = $sujet;
+            $mail->isHTML(true);
+            $mail->Body       = $html;
+            return $mail->send();
+        } catch (Exception $e) {
+            error_log("Email identifiants restaurant erreur: " . $e->getMessage());
+        }
+    }
+
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8\r\n";
+    $headers .= "From: Saveur Kaolack <noreply@saveurkaolack.sn>\r\n";
+    return mail($email_resto, $sujet, $html, $headers);
+}
+
+/**
  * Envoie un message Telegram via Bot API
  * Utilise TELEGRAM_BOT_TOKEN de config.php si $bot_token est vide
  */
