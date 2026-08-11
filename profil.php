@@ -50,7 +50,6 @@ try {
             $email = trim($_POST['email'] ?? '');
             $heure_ouverture = $_POST['heure_ouverture'] ?? '08:00';
             $heure_fermeture = $_POST['heure_fermeture'] ?? '22:00';
-            $frais_livraison = intval($_POST['frais_livraison'] ?? 1000);
             $commande_minimum = intval($_POST['commande_minimum'] ?? 3000);
 
             if (!telephoneValide($telephone)) {
@@ -90,15 +89,15 @@ try {
             
             // Mettre à jour les infos
             $stmt = $pdo->prepare("UPDATE restaurants SET 
-                nom = ?, description = ?, adresse = ?, quartier = ?, 
+                nom = ?, description = ?, adresse = ?, quartier = ?,
                 telephone = ?, email = ?, heure_ouverture = ?, heure_fermeture = ?,
-                frais_livraison = ?, commande_minimum = ?, photo_banniere = ?, photo_logo = ?
+                commande_minimum = ?, photo_banniere = ?, photo_logo = ?
                 WHERE id = ? AND utilisateur_id = ?");
             
             $stmt->execute([
                 $nom, $description, $adresse, $quartier,
                 $telephone, $email, $heure_ouverture, $heure_fermeture,
-                $frais_livraison, $commande_minimum, $photo_banniere, $photo_logo,
+                $commande_minimum, $photo_banniere, $photo_logo,
                 $restaurant_id, $_SESSION['id']
             ]);
             
@@ -246,23 +245,19 @@ require_once 'includes/header.php';
                 </div>
             </div>
             
-            <!-- Livraison -->
+            <!-- Commande -->
             <div class="border-t border-[hsl(30_25%_86%)] pt-6">
-                <h2 class="font-display text-xl font-bold text-[hsl(20_30%_14%)] mb-4">Paramètres de livraison</h2>
-                
+                <h2 class="font-display text-xl font-bold text-[hsl(20_30%_14%)] mb-4">Paramètres de commande</h2>
+                <p class="text-xs text-[hsl(25_15%_42%)] mb-4">🚴 Les frais de livraison ne sont plus gérés sur le site : convenez-en directement avec vos clients.</p>
+
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Frais de livraison (FCFA)</label>
-                        <input type="number" name="frais_livraison" value="<?php echo $restaurant['frais_livraison'] ?? 1000; ?>" min="0" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
-                    </div>
-                    
                     <div>
                         <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Commande minimum (FCFA)</label>
                         <input type="number" name="commande_minimum" value="<?php echo $restaurant['commande_minimum'] ?? 3000; ?>" min="0" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
                     </div>
                 </div>
             </div>
-            
+
             <!-- Boutons -->
             <div class="border-t border-[hsl(30_25%_86%)] pt-6 flex items-center justify-between">
                 <button type="submit" class="rounded-xl bg-[hsl(14_72%_46%)] px-6 py-2 font-medium text-white hover:bg-[hsl(14_72%_40%)] transition-colors">

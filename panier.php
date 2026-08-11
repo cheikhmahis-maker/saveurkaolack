@@ -160,8 +160,8 @@ if ($restaurantId) {
     $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-$delivery = !empty($items) ? (int) ($restaurant['frais_livraison'] ?? 1000) : 0;
-$total = $subtotal + $delivery;
+// Frais de livraison retirés du site : le restaurant et le client s'arrangent directement.
+$total = $subtotal;
 
 require_once 'includes/header.php';
 
@@ -352,10 +352,7 @@ if (!empty($_SESSION['erreur_commande'])) {
                     <span>Sous-total (<?php echo $nbArticles; ?> article<?php echo $nbArticles > 1 ? 's' : ''; ?>)</span>
                     <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($subtotal, 0, ',', ' '); ?> F</span>
                 </div>
-                <div class="flex justify-between text-[hsl(25_15%_42%)]">
-                    <span>Livraison</span>
-                    <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($delivery, 0, ',', ' '); ?> F</span>
-                </div>
+                <p class="text-xs text-[hsl(25_15%_42%)]">🚴 Livraison à convenir directement avec le restaurant.</p>
             </div>
             <div class="my-4 h-px bg-[hsl(30_25%_86%)]"></div>
             <div class="flex items-baseline justify-between">

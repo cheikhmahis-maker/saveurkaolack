@@ -36,7 +36,6 @@ foreach ($items as $item) {
 
 // Récupérer les infos du restaurant depuis la BDD
 $restaurant     = null;
-$fraisLivraison = 1000;
 $waveDisponible = false;
 
 try {
@@ -46,7 +45,6 @@ try {
         $stmt = $pdo->prepare("SELECT * FROM restaurants WHERE id = ? LIMIT 1");
         $stmt->execute([$restaurantId]);
         $restaurant     = $stmt->fetch(PDO::FETCH_ASSOC);
-        $fraisLivraison = $restaurant ? $restaurant['frais_livraison'] : 1000;
         $waveDisponible = !empty($restaurant['wave_api_key']);
     }
 } catch (PDOException $e) {
@@ -94,8 +92,8 @@ foreach ($items as $item) {
     $subtotal += $item['prix'] * $item['quantite'];
     $nbArticles += $item['quantite'];
 }
-$delivery = $fraisLivraison;
-$total = $subtotal + $delivery;
+// Frais de livraison retirés du site : le restaurant et le client s'arrangent directement.
+$total = $subtotal;
 
 // Générer un token CSRF pour la sécurité
 if (empty($_SESSION['csrf_token'])) {
@@ -374,12 +372,7 @@ require_once 'includes/header.php';
                     <span>Sous-total (<?php echo $nbArticles; ?> article<?php echo $nbArticles > 1 ? 's' : ''; ?>)</span>
                     <span class="text-[hsl(20_30%_14%)]"><?php echo number_format($subtotal, 0, ',', ' '); ?> F</span>
                 </div>
-                <div class="flex justify-between text-[hsl(25_15%_42%)]">
-                    <span>Livraison</span>
-                    <span class="<?php echo $delivery > 0 ? 'text-[hsl(20_30%_14%)]' : 'text-green-600 font-medium'; ?>">
-                        <?php echo $delivery > 0 ? number_format($delivery, 0, ',', ' ') . ' F' : 'Gratuite'; ?>
-                    </span>
-                </div>
+                <p class="text-xs text-[hsl(25_15%_42%)]">🚴 Livraison à convenir directement avec le restaurant.</p>
             </div>
             
             <div class="my-4 h-px bg-[hsl(30_25%_86%)]"></div>

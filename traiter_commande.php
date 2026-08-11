@@ -119,24 +119,21 @@ try {
     }
     unset($item);
 
-    // Récupérer frais de livraison et minimum de commande du restaurant
-    $frais_livraison = 1000;
+    // Frais de livraison retirés du site : le restaurant et le client s'arrangent directement.
+    // Récupérer le minimum de commande du restaurant
     $commande_minimum = 0;
     if ($restaurant_id) {
-        $stmt_frais = $pdo->prepare("SELECT frais_livraison, commande_minimum FROM restaurants WHERE id = ? LIMIT 1");
+        $stmt_frais = $pdo->prepare("SELECT commande_minimum FROM restaurants WHERE id = ? LIMIT 1");
         $stmt_frais->execute([$restaurant_id]);
         $frais_row = $stmt_frais->fetch(PDO::FETCH_ASSOC);
         if ($frais_row) {
-            $frais_livraison  = (int) $frais_row['frais_livraison'];
             $commande_minimum = (int) ($frais_row['commande_minimum'] ?? 0);
         }
     }
-    $total += $frais_livraison;
 
     // Vérifier le minimum de commande côté serveur
-    $total_sans_frais = $total - $frais_livraison;
-    if ($commande_minimum > 0 && $total_sans_frais < $commande_minimum) {
-        $_SESSION['erreur_commande'] = "Le montant minimum de commande est de " . number_format($commande_minimum, 0, ',', ' ') . " FCFA (hors frais de livraison).";
+    if ($commande_minimum > 0 && $total < $commande_minimum) {
+        $_SESSION['erreur_commande'] = "Le montant minimum de commande est de " . number_format($commande_minimum, 0, ',', "\xc2\xa0") . " FCFA.";
         header('Location: checkout.php');
         exit();
     }

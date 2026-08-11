@@ -72,7 +72,7 @@ function construireContexteBDD(PDO $pdo): string {
 
     try {
         $stmt = $pdo->prepare("
-            SELECT id, nom, quartier, delai_livraison_min, delai_livraison_max, frais_livraison
+            SELECT id, nom, quartier, delai_livraison_min, delai_livraison_max
             FROM restaurants
             WHERE statut = 'actif'
               AND (essai_debut IS NULL OR DATE_ADD(essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (abonnement_jusquau IS NOT NULL AND abonnement_jusquau >= CURDATE()))
@@ -84,7 +84,7 @@ function construireContexteBDD(PDO $pdo): string {
         if ($restos) {
             $ctx .= "\n### Restaurants actifs :\n";
             foreach ($restos as $r) {
-                $ctx .= "- **{$r['nom']}** — Quartier {$r['quartier']}, livraison {$r['delai_livraison_min']}-{$r['delai_livraison_max']} min, frais {$r['frais_livraison']} FCFA → [menu](restaurant.php?id={$r['id']})\n";
+                $ctx .= "- **{$r['nom']}** — Quartier {$r['quartier']}, livraison {$r['delai_livraison_min']}-{$r['delai_livraison_max']} min → [menu](restaurant.php?id={$r['id']})\n";
             }
         }
     } catch (PDOException $e) {}

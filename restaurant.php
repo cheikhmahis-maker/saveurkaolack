@@ -191,14 +191,8 @@ require_once 'includes/header.php';
         <div class="space-y-8">
 
             <!-- Infos livraison (mobile uniquement — sur desktop c'est dans la sidebar) -->
-            <div class="lg:hidden grid grid-cols-3 gap-2 rounded-2xl bg-[hsl(36_50%_98%)] border border-[hsl(30_25%_86%)] p-4">
-                <div class="text-center">
-                    <div class="text-lg font-bold text-[hsl(14_72%_46%)]">
-                        <?php echo $restaurant['frais_livraison'] > 0 ? number_format($restaurant['frais_livraison'], 0, ',', ' ') . ' F' : 'Gratuit'; ?>
-                    </div>
-                    <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5">Livraison</div>
-                </div>
-                <div class="text-center border-x border-[hsl(30_25%_86%)]">
+            <div class="lg:hidden grid grid-cols-2 gap-2 rounded-2xl bg-[hsl(36_50%_98%)] border border-[hsl(30_25%_86%)] p-4">
+                <div class="text-center border-r border-[hsl(30_25%_86%)]">
                     <div class="text-lg font-bold text-[hsl(20_30%_14%)]">
                         <?php echo $restaurant['delai_livraison_min']; ?>-<?php echo $restaurant['delai_livraison_max']; ?> min
                     </div>
@@ -206,11 +200,12 @@ require_once 'includes/header.php';
                 </div>
                 <div class="text-center">
                     <div class="text-lg font-bold text-[hsl(20_30%_14%)]">
-                        <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
+                        <?php echo number_format($restaurant['commande_minimum'], 0, ',', "\xc2\xa0"); ?> F
                     </div>
                     <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5">Minimum</div>
                 </div>
             </div>
+            <p class="lg:hidden text-xs text-[hsl(25_15%_42%)] text-center">🚴 Livraison à convenir directement avec le restaurant.</p>
 
             <?php if (empty($plats)): ?>
             <div class="rounded-2xl bg-[hsl(36_50%_98%)] p-8 text-center">
@@ -321,18 +316,13 @@ require_once 'includes/header.php';
                         </span>
                     </div>
                     <div class="flex justify-between">
-                        <span>Frais</span>
-                        <span class="font-medium text-green-600">
-                            <?php echo $restaurant['frais_livraison'] > 0 ? number_format($restaurant['frais_livraison'], 0, ',', ' ') . ' F' : 'Gratuit'; ?>
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
                         <span>Min. commande</span>
                         <span class="font-medium text-[hsl(20_30%_14%)]">
                             <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
                         </span>
                     </div>
                 </div>
+                <p class="mt-3 text-xs text-[hsl(25_15%_42%)]">🚴 Frais de livraison à convenir directement avec le restaurant.</p>
                 <div class="mt-3 pt-3 border-t border-[hsl(30_25%_86%)] text-xs text-[hsl(25_15%_42%)]">
                     📍 <?php echo htmlspecialchars($restaurant['adresse']); ?>, <?php echo htmlspecialchars($restaurant['quartier']); ?>
                 </div>

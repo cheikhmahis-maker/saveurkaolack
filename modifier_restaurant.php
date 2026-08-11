@@ -51,7 +51,6 @@ try {
         $adresse             = trim($_POST['adresse']             ?? '');
         $heure_ouverture     = $_POST['heure_ouverture']          ?? '08:00';
         $heure_fermeture     = $_POST['heure_fermeture']          ?? '22:00';
-        $frais_livraison     = intval($_POST['frais_livraison']   ?? 1000);
         $wave_api_key        = trim($_POST['wave_api_key']        ?? '');
         $telegram_bot_token  = trim($_POST['telegram_bot_token']  ?? '');
         $telegram_chat_id    = trim($_POST['telegram_chat_id']    ?? '');
@@ -61,8 +60,8 @@ try {
         } else {
 
         // Construire la requête UPDATE de façon flexible selon ce qui est renseigné
-        $set_clauses = "telephone=?, email=?, adresse=?, heure_ouverture=?, heure_fermeture=?, frais_livraison=?";
-        $params      = [$telephone, $email, $adresse, $heure_ouverture, $heure_fermeture, $frais_livraison];
+        $set_clauses = "telephone=?, email=?, adresse=?, heure_ouverture=?, heure_fermeture=?";
+        $params      = [$telephone, $email, $adresse, $heure_ouverture, $heure_fermeture];
 
         // N'écraser la clé Wave que si une nouvelle est saisie
         if (!empty($wave_api_key)) {
@@ -147,7 +146,7 @@ require_once 'includes/header.php';
                    class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20">
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Ouverture</label>
                 <input type="time" name="heure_ouverture" value="<?php echo $restaurant['heure_ouverture']; ?>"
@@ -156,11 +155,6 @@ require_once 'includes/header.php';
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Fermeture</label>
                 <input type="time" name="heure_fermeture" value="<?php echo $restaurant['heure_fermeture']; ?>"
-                       class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Frais livraison (F)</label>
-                <input type="number" name="frais_livraison" value="<?php echo $restaurant['frais_livraison']; ?>" min="0"
                        class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20">
             </div>
         </div>
