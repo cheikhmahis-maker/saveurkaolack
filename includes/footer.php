@@ -42,7 +42,9 @@
         </div>
     </footer>
     
-    <!-- Assistant Virtuel -->
+    <!-- Assistant Virtuel (masqué sur les tableaux de bord resto/admin : cache la barre de navigation mobile) -->
+    <?php if (empty($isDashboardPage)): ?>
     <script src="<?php echo BASE_URL; ?>assets/js/chatbot.js"></script>
+    <?php endif; ?>
 </body>
 </html>

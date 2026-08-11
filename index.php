@@ -20,8 +20,17 @@ try {
     $pdo = getDB();
     assurerSchemaEssai($pdo);
 
-    // Catégories
-    $stmt = $pdo->query("SELECT * FROM categories ORDER BY ordre_affichage LIMIT 6");
+    // Catégories (avec le nombre de restaurants visibles publiquement dans chacune)
+    $stmt = $pdo->query("
+        SELECT c.*, (
+            SELECT COUNT(*) FROM restaurants r
+            WHERE r.categorie_id = c.id
+              AND r.statut = 'actif'
+              AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))
+        ) AS nb_restaurants
+        FROM categories c
+        ORDER BY c.ordre_affichage LIMIT 6
+    ");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Restaurants populaires (top 3 par note)
