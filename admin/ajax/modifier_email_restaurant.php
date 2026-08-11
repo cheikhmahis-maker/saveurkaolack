@@ -35,6 +35,11 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit();
 }
 
+if (!empty($telephone) && !telephoneValide($telephone)) {
+    echo json_encode(['success' => false, 'message' => 'Numéro de téléphone invalide']);
+    exit();
+}
+
 $email     = substr($email, 0, 150);
 $telephone = substr($telephone, 0, 20);
 

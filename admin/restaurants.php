@@ -308,7 +308,7 @@ $date_jour = date('d/m/Y');
 
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Téléphone</label>
-                <input type="tel" id="modal-telephone-input" name="telephone" maxlength="20"
+                <input type="tel" id="modal-telephone-input" name="telephone" maxlength="20" pattern="[\d\s\-\+]{7,17}" title="Entrez un numéro valide (ex: +221 77 123 45 67)"
                        class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2.5 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20 text-sm"
                        placeholder="77 000 00 00">
             </div>

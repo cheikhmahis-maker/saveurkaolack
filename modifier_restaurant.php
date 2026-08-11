@@ -56,6 +56,10 @@ try {
         $telegram_bot_token  = trim($_POST['telegram_bot_token']  ?? '');
         $telegram_chat_id    = trim($_POST['telegram_chat_id']    ?? '');
 
+        if (!telephoneValide($telephone)) {
+            $erreur = "Le numéro de téléphone n'est pas valide. Exemple : +221 77 123 45 67";
+        } else {
+
         // Construire la requête UPDATE de façon flexible selon ce qui est renseigné
         $set_clauses = "telephone=?, email=?, adresse=?, heure_ouverture=?, heure_fermeture=?, frais_livraison=?";
         $params      = [$telephone, $email, $adresse, $heure_ouverture, $heure_fermeture, $frais_livraison];
@@ -96,6 +100,7 @@ try {
         $stmt->execute([$restaurant['id']]);
         $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
         }
+        }
     }
     
 } catch (PDOException $e) {
@@ -126,7 +131,7 @@ require_once 'includes/header.php';
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Téléphone</label>
-                <input type="tel" name="telephone" value="<?php echo htmlspecialchars($restaurant['telephone'] ?? ''); ?>"
+                <input type="tel" name="telephone" pattern="[\d\s\-\+]{7,17}" title="Entrez un numéro valide (ex: +221 77 123 45 67)" placeholder="+221 77 000 00 00" value="<?php echo htmlspecialchars($restaurant['telephone'] ?? ''); ?>"
                        class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20">
             </div>
             <div>

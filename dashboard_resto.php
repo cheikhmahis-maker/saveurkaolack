@@ -253,7 +253,7 @@ require_once 'includes/header.php';
                             <div class="font-medium text-[hsl(20_30%_14%)]">
                                 <?php echo htmlspecialchars($cmd['client_prenom'] ?: 'Client'); ?>
                                 <?php if (!empty($cmd['client_tel'])): ?>
-                                — <a href="tel:<?php echo htmlspecialchars($cmd['client_tel']); ?>"
+                                — <a href="tel:<?php echo htmlspecialchars(formatTelLien($cmd['client_tel'])); ?>"
                                      class="text-[hsl(14_72%_46%)] font-mono text-sm hover:underline">
                                     <?php echo htmlspecialchars($cmd['client_tel']); ?>
                                   </a>

@@ -38,7 +38,7 @@ if (isset($_GET['add'])) {
     $stmt = $pdo->prepare("SELECT p.*, r.nom as restaurant_nom, r.id as restaurant_id
                           FROM plats p
                           JOIN restaurants r ON p.restaurant_id = r.id
-                          WHERE p.id = ? AND r.statut = 'actif'
+                          WHERE p.id = ? AND p.disponible = 1 AND r.statut = 'actif'
                             AND (r.essai_debut IS NULL OR DATE_ADD(r.essai_debut, INTERVAL 45 DAY) >= CURDATE() OR (r.abonnement_jusquau IS NOT NULL AND r.abonnement_jusquau >= CURDATE()))");
     $stmt->execute([$platId]);
     $plat = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -171,6 +171,13 @@ if (isset($_SESSION['flash_message'])) {
     $flashMessage = $_SESSION['flash_message'];
     unset($_SESSION['flash_message']);
 }
+
+// Afficher l'erreur de commande si présente (ex: restaurant fermé, plat indisponible)
+$erreurCommande = null;
+if (!empty($_SESSION['erreur_commande'])) {
+    $erreurCommande = $_SESSION['erreur_commande'];
+    unset($_SESSION['erreur_commande']);
+}
 ?>
 
 <section class="bg-[hsl(36_78%_92%)]/40">
@@ -181,6 +188,19 @@ if (isset($_SESSION['flash_message'])) {
         </h1>
     </div>
 </section>
+
+<?php if ($erreurCommande): ?>
+<!-- Erreur de commande -->
+<section class="container mx-auto px-4 max-w-7xl -mt-6 mb-6">
+    <div class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
+        <span class="text-xl shrink-0">⚠️</span>
+        <div>
+            <div class="font-semibold mb-1">Commande non envoyée</div>
+            <div class="text-sm"><?php echo htmlspecialchars($erreurCommande); ?></div>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <?php if ($flashMessage): ?>
 <!-- Message Flash -->

@@ -52,7 +52,11 @@ try {
             $heure_fermeture = $_POST['heure_fermeture'] ?? '22:00';
             $frais_livraison = intval($_POST['frais_livraison'] ?? 1000);
             $commande_minimum = intval($_POST['commande_minimum'] ?? 3000);
-            
+
+            if (!telephoneValide($telephone)) {
+                $erreur = "Le numéro de téléphone n'est pas valide. Exemple : +221 77 123 45 67";
+            } else {
+
             // Gérer l'upload de la photo bannière
             $photo_banniere = $restaurant['photo_banniere'] ?? null;
             if (!empty($_FILES['photo_banniere']['tmp_name']) && $_FILES['photo_banniere']['error'] === 0) {
@@ -104,6 +108,7 @@ try {
             $stmt = $pdo->prepare("SELECT * FROM restaurants WHERE utilisateur_id = ? LIMIT 1");
             $stmt->execute([$_SESSION['id']]);
             $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
             }
         }
     }
@@ -214,7 +219,7 @@ require_once 'includes/header.php';
                     
                     <div>
                         <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Téléphone</label>
-                        <input type="tel" name="telephone" value="<?php echo htmlspecialchars($restaurant['telephone']); ?>" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
+                        <input type="tel" name="telephone" pattern="[\d\s\-\+]{7,17}" title="Entrez un numéro valide (ex: +221 77 123 45 67)" placeholder="+221 77 000 00 00" value="<?php echo htmlspecialchars($restaurant['telephone']); ?>" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
                     </div>
                     
                     <div>

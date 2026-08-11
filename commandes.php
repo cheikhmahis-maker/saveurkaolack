@@ -166,7 +166,7 @@ require_once 'includes/header.php';
                         <span class="text-sm text-[hsl(25_15%_42%)]">📞 <?php echo htmlspecialchars($cmd['telephone']); ?></span>
                         
                         <!-- Bouton Appeler -->
-                        <a href="tel:<?php echo htmlspecialchars($cmd['telephone']); ?>" 
+                        <a href="tel:<?php echo htmlspecialchars(formatTelLien($cmd['telephone'])); ?>"
                            class="inline-flex items-center gap-1 rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white hover:bg-blue-600 transition-colors"
                            title="Appeler le client">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

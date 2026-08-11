@@ -66,6 +66,7 @@ function envoyerEmailRestaurant(
         : '';
     $url_dashboard  = BASE_URL . 'commandes.php';
     $sujet          = "🔔 Nouvelle commande #{$numero_tracking} — " . htmlspecialchars($nom_resto);
+    $telLien        = formatTelLien($telephone);
 
     $html = <<<HTML
 <!DOCTYPE html>
@@ -83,7 +84,7 @@ function envoyerEmailRestaurant(
         <h3 style="margin:0 0 10px;font-size:16px;color:#7f1d0b;border-bottom:1px solid #f0e8df;padding-bottom:8px;">👤 Client</h3>
         <p style="margin:6px 0;font-size:18px;font-weight:bold;">{$prenom}</p>
         <p style="margin:6px 0;">
-            <a href="tel:{$telephone}" style="color:#c0392b;text-decoration:none;font-size:22px;font-weight:bold;letter-spacing:1px;">
+            <a href="tel:{$telLien}" style="color:#c0392b;text-decoration:none;font-size:22px;font-weight:bold;letter-spacing:1px;">
                 📞 {$telephone}
             </a>
         </p>

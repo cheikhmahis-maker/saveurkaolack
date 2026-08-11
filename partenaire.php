@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erreur = "Erreur de sécurité. Veuillez réessayer.";
     } elseif (empty($nom) || empty($proprietaire) || empty($telephone) || empty($email) || empty($adresse)) {
         $erreur = "Veuillez remplir tous les champs obligatoires.";
+    } elseif (!telephoneValide($telephone)) {
+        $erreur = "Le numéro de téléphone n'est pas valide. Exemple : +221 77 123 45 67";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $erreur = "L'adresse email n'est pas valide.";
     } else {
@@ -161,7 +163,7 @@ require_once 'includes/header.php';
                 </div>
                 <div>
                     <label for="phone" class="block text-sm font-medium text-[hsl(20_30%_14%)]">Téléphone</label>
-                    <input type="tel" id="phone" name="phone" required class="mt-1.5 h-11 w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20" placeholder="+221 77 000 00 00">
+                    <input type="tel" id="phone" name="phone" required pattern="[\d\s\-\+]{7,17}" title="Entrez un numéro valide (ex: +221 77 123 45 67)" class="mt-1.5 h-11 w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 focus:border-[hsl(14_72%_46%)] focus:outline-none focus:ring-2 focus:ring-[hsl(14_72%_46%)]/20" placeholder="+221 77 000 00 00">
                 </div>
                 <div>
                     <label for="email" class="block text-sm font-medium text-[hsl(20_30%_14%)]">Email</label>

@@ -362,6 +362,27 @@ function estRestaurantOuvert(string $heureOuverture, string $heureFermeture): bo
 }
 
 /**
+ * Vérifie qu'un numéro de téléphone contient un nombre de chiffres raisonnable
+ * (accepte les espaces, tirets, "+", avec ou sans indicatif +221).
+ */
+function telephoneValide(string $telephone): bool {
+    $chiffres = preg_replace('/\D/', '', $telephone);
+    return strlen($chiffres) >= 7 && strlen($chiffres) <= 15;
+}
+
+/**
+ * Normalise un numéro pour un lien tel:, en ajoutant l'indicatif +221
+ * s'il est absent (numéro enregistré sans indicatif).
+ */
+function formatTelLien(string $telephone): string {
+    $chiffres = preg_replace('/\D/', '', $telephone);
+    if (!str_starts_with($chiffres, '221')) {
+        $chiffres = '221' . $chiffres;
+    }
+    return '+' . $chiffres;
+}
+
+/**
  * =====================================================
  * ESSAI GRATUIT & ABONNEMENT RESTAURANT
  * =====================================================
