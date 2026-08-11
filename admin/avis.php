@@ -41,9 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['avis_id'], $_POST['ac
                     $stmt = $pdo->prepare("
                         UPDATE restaurants r
                         SET note_moyenne = (
-                            SELECT ROUND(AVG(note), 1) FROM avis
-                            WHERE restaurant_id = r.id AND statut = 'approuve'
-                        )
+                                SELECT ROUND(AVG(note), 1) FROM avis
+                                WHERE restaurant_id = r.id AND statut = 'approuve'
+                            ),
+                            nb_avis = (
+                                SELECT COUNT(*) FROM avis
+                                WHERE restaurant_id = r.id AND statut = 'approuve'
+                            )
                         WHERE r.id = (SELECT restaurant_id FROM avis WHERE id = ?)
                     ");
                     $stmt->execute([$avis_id]);
