@@ -119,9 +119,11 @@ function callClaudeAPI(string $message, array $history, string $contexteBDD): st
     $apiKey = defined('ANTHROPIC_API_KEY') ? ANTHROPIC_API_KEY : '';
 
     if (empty($apiKey) || str_starts_with($apiKey, 'sk-ant-VOTRE')) {
-        return "Je suis en cours de configuration. En attendant, appelez-nous au +221 78 521 65 68 ou écrivez à mouhamedsy3002@gmail.com ! 📞";
+        return "Je suis en cours de configuration. En attendant, appelez-nous au " . SITE_TEL . " ou écrivez à " . SITE_EMAIL . " ! 📞";
     }
 
+    $siteTel = SITE_TEL;
+    $siteEmail = SITE_EMAIL;
     $systemPrompt = <<<SYSTEM
 Tu es l'assistant virtuel de **Saveur Kaolack**, une plateforme de livraison de repas à Kaolack, Sénégal.
 Tu réponds en français naturel (ou en Wolof si l'utilisateur écrit en Wolof).
@@ -142,7 +144,7 @@ Tu es chaleureux, concis, et tu utilises des emojis avec modération.
 - Listes de plats : 5 maximum
 
 ## Contact
-- Tél : +221 78 521 65 68 | Email : mouhamedsy3002@gmail.com
+- Tél : {$siteTel} | Email : {$siteEmail}
 - Horaires : 7j/7, 11h–23h
 
 ## Données en temps réel

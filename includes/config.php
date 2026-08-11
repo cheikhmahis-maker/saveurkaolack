@@ -79,7 +79,7 @@ define('IMG_LOGO_DEFAUT_FILE', DEFAUT_PATH . 'logo_defaut.svg');
 // ─── Informations du site ─────────────────────────────────────────────────────
 define('SITE_NOM',     'Saveur Kaolack');
 define('SITE_SLOGAN',  'La cuisine kaolackoise authentique à domicile');
-define('SITE_EMAIL',   'mouhamedsy3002@gmail.com');
+define('SITE_EMAIL',   'saveurkaolack1@gmail.com');
 define('SITE_TEL',     '+221 78 521 65 68');
 define('SITE_ADRESSE', 'Kaolack, Sénégal');
 
