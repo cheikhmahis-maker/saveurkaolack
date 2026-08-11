@@ -73,7 +73,7 @@ try {
             }
             
             // Gérer l'upload du logo
-            $photo_logo = $restaurant['photo_logo'] ?? null;
+            $photo_logo = $restaurant['logo'] ?? null;
             if (!empty($_FILES['photo_logo']['tmp_name']) && $_FILES['photo_logo']['error'] === 0) {
                 $upload_dir = 'uploads/restaurants/';
                 if (!is_dir($upload_dir)) {
@@ -91,7 +91,7 @@ try {
             $stmt = $pdo->prepare("UPDATE restaurants SET 
                 nom = ?, description = ?, adresse = ?, quartier = ?,
                 telephone = ?, email = ?, heure_ouverture = ?, heure_fermeture = ?,
-                commande_minimum = ?, photo_banniere = ?, photo_logo = ?
+                commande_minimum = ?, photo_banniere = ?, logo = ?
                 WHERE id = ? AND utilisateur_id = ?");
             
             $stmt->execute([
@@ -173,8 +173,8 @@ require_once 'includes/header.php';
                 <div>
                     <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-2">Logo du restaurant</label>
                     <div class="mb-3 rounded-xl overflow-hidden bg-gray-100 aspect-square max-w-[200px]">
-                        <?php if (!empty($restaurant['photo_logo'])): ?>
-                        <img src="uploads/restaurants/<?php echo $restaurant['photo_logo']; ?>" alt="Logo" class="w-full h-full object-cover">
+                        <?php if (!empty($restaurant['logo'])): ?>
+                        <img src="uploads/restaurants/<?php echo $restaurant['logo']; ?>" alt="Logo" class="w-full h-full object-cover">
                         <?php else: ?>
                         <div class="h-full flex items-center justify-center text-gray-400">
                             <div class="text-center">
