@@ -29,8 +29,8 @@ try {
     // Recherche texte
     $q = isset($_GET['q']) ? trim($_GET['q']) : '';
     if (!empty($q)) {
-        $where[] = "(nom LIKE :q OR description LIKE :q OR quartier LIKE :q)";
-        $params[':q'] = '%' . $q . '%';
+        $where[] = "(r.nom LIKE :q1 OR r.description LIKE :q2 OR r.quartier LIKE :q3)";
+        $params[':q1'] = $params[':q2'] = $params[':q3'] = '%' . $q . '%';
     }
     
     // Filtre catégorie
@@ -44,7 +44,7 @@ try {
             FROM restaurants r 
             LEFT JOIN categories c ON r.categorie_id = c.id 
             WHERE " . implode(' AND ', $where) . " 
-            ORDER BY est_nouveau DESC, note_moyenne DESC, nom";
+            ORDER BY r.est_nouveau DESC, r.note_moyenne DESC, r.nom";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
