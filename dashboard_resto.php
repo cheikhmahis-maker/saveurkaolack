@@ -203,7 +203,7 @@ require_once 'includes/header.php';
                 <p class="text-[hsl(25_15%_42%)]">Gérez votre restaurant</p>
             </div>
 
-            <?php if (isset($erreur)): ?>
+            <?php if (!empty($erreur)): ?>
             <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
                 <?php echo htmlspecialchars($erreur); ?>
             </div>
