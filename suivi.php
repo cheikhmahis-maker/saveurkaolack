@@ -376,7 +376,7 @@ require_once 'includes/header.php';
                     Laissez votre avis
                 </h3>
                 <p class="text-sm text-green-600 mb-3">Votre commande est livrée. Partagez votre expérience !</p>
-                <form method="post" action="" class="space-y-3">
+                <form method="post" action="" class="space-y-3" id="avis-form">
                     <?php echo champTokenCSRF(); ?>
                     <input type="hidden" name="laisser_avis" value="1">
                     <div>
@@ -384,11 +384,12 @@ require_once 'includes/header.php';
                         <div class="flex gap-1" id="star-group">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
                             <label class="star-label cursor-pointer" data-val="<?php echo $i; ?>">
-                                <input type="radio" name="note" value="<?php echo $i; ?>" class="hidden" required>
+                                <input type="radio" name="note" value="<?php echo $i; ?>" class="hidden">
                                 <span class="text-3xl text-gray-300 transition-colors select-none">★</span>
                             </label>
                             <?php endfor; ?>
                         </div>
+                        <p id="avis-note-erreur" class="hidden text-sm text-red-600 mt-1">Veuillez sélectionner une note (touchez une étoile).</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Commentaire (optionnel)</label>
@@ -424,8 +425,22 @@ require_once 'includes/header.php';
         lbl.addEventListener('click', () => {
             selected = idx + 1;
             coloriser(selected);
+            const erreurNote = document.getElementById('avis-note-erreur');
+            if (erreurNote) erreurNote.classList.add('hidden');
         });
     });
+
+    const avisForm = document.getElementById('avis-form');
+    if (avisForm) {
+        avisForm.addEventListener('submit', (e) => {
+            if (selected < 1) {
+                e.preventDefault();
+                const erreurNote = document.getElementById('avis-note-erreur');
+                if (erreurNote) erreurNote.classList.remove('hidden');
+                document.getElementById('star-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
 })();
 
 <?php if ($commande && !in_array($commande['statut'], ['livree', 'annulee'])): ?>
