@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --background: 38 44% 96%;
+    --foreground: 20 30% 14%;
+    --card: 36 50% 98%;
+    --card-foreground: 20 30% 14%;
+    --primary: 14 72% 46%;
+    --primary-foreground: 38 60% 97%;
+    --secondary: 36 78% 92%;
+    --secondary-foreground: 20 40% 18%;
+    --muted: 36 30% 92%;
+    --muted-foreground: 25 15% 42%;
+    --accent: 142 38% 32%;
+    --accent-foreground: 38 60% 97%;
+    --saffron: 38 92% 52%;
+    --saffron-foreground: 20 50% 14%;
+    --destructive: 0 75% 48%;
+    --destructive-foreground: 38 60% 97%;
+    --border: 30 25% 86%;
+    --input: 30 25% 86%;
+    --ring: 14 72% 46%;
+    --radius: 1rem;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: hsl(38 44% 96%);
+    color: hsl(20 30% 14%);
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.font-display {
+    font-family: 'Fraunces', Georgia, serif;
+}
+
+.bg-gradient-warm {
+    background: linear-gradient(135deg, hsl(14 72% 46%), hsl(28 88% 56%));
+}
+
+.bg-gradient-sun {
+    background: linear-gradient(180deg, hsl(38 92% 60%), hsl(18 85% 55%));
+}
+
+.shadow-warm {
+    box-shadow: 0 20px 50px -20px hsl(14 72% 35% / 0.35);
+}
+
+.shadow-soft {
+    box-shadow: 0 8px 24px -12px hsl(20 40% 20% / 0.18);
+}
+
+.shadow-card {
+    box-shadow: 0 2px 12px -4px hsl(20 40% 20% / 0.1);
+}
+
+.text-balance {
+    text-wrap: balance;
+}

@@ -35,33 +35,54 @@ if (!defined('BASE_URL')) {
 function afficherImagePlat(?string $nom_fichier, string $alt = '', string $classe = '', string $style = ''): string {
     // Nettoyer le nom de fichier
     $nom_fichier = $nom_fichier ? basename($nom_fichier) : '';
-    
+
     // Vérifier si le fichier existe physiquement
     $chemin_complet = PLATS_PATH . $nom_fichier;
     $fichier_existe = !empty($nom_fichier) && file_exists($chemin_complet) && is_file($chemin_complet);
-    
+
     // URL finale
     $url = $fichier_existe ? PLATS_URL . urlencode($nom_fichier) : IMG_PLAT_DEFAUT;
-    
+    $urlWebp = $fichier_existe ? urlWebpSiExiste($chemin_complet, $url) : null;
+
     // Construire la balise HTML
     $html = '<img src="' . $url . '"';
     $html .= ' alt="' . htmlspecialchars($alt ?: 'Image du plat', ENT_QUOTES, 'UTF-8') . '"';
     $html .= ' loading="lazy"'; // Chargement différé pour performance
-    
+
     if (!empty($classe)) {
         $html .= ' class="' . htmlspecialchars($classe, ENT_QUOTES, 'UTF-8') . '"';
     }
-    
+
     if (!empty($style)) {
         $html .= ' style="' . htmlspecialchars($style, ENT_QUOTES, 'UTF-8') . '"';
     }
-    
+
     // Fallback JavaScript si l'image échoue quand même
     $html .= ' onerror="this.onerror=null;this.src=\'' . IMG_PLAT_DEFAUT . '\'"';
-    
+
     $html .= '>';
-    
+
+    // Servir la version WebP (plus légère) quand elle existe, avec repli automatique sur l'image d'origine
+    if ($urlWebp) {
+        $html = '<picture><source srcset="' . htmlspecialchars($urlWebp, ENT_QUOTES, 'UTF-8') . '" type="image/webp">' . $html . '</picture>';
+    }
+
     return $html;
+}
+
+/**
+ * Retourne l'URL de la version WebP d'une image si elle existe à côté du fichier d'origine.
+ *
+ * @param string $chemin_complet Chemin disque de l'image d'origine
+ * @param string $url_originale URL publique de l'image d'origine
+ * @return string|null URL de la version .webp, ou null si elle n'existe pas
+ */
+function urlWebpSiExiste(string $chemin_complet, string $url_originale): ?string {
+    $cheminWebp = preg_replace('/\.[^.\/]+$/', '.webp', $chemin_complet);
+    if ($cheminWebp && $cheminWebp !== $chemin_complet && file_exists($cheminWebp)) {
+        return preg_replace('/\.[^.\/]+$/', '.webp', $url_originale);
+    }
+    return null;
 }
 
 /**
@@ -96,19 +117,24 @@ function afficherImageResto(?string $nom_fichier, string $alt = '', string $clas
     
     $fichier_existe = !empty($nom_fichier) && file_exists($chemin_complet) && is_file($chemin_complet);
     $url = $fichier_existe ? $url_base . urlencode($nom_fichier) : $url_defaut;
-    
+    $urlWebp = $fichier_existe ? urlWebpSiExiste($chemin_complet, $url) : null;
+
     // Construire le HTML
     $html = '<img src="' . $url . '"';
     $html .= ' alt="' . htmlspecialchars($alt ?: 'Image du restaurant', ENT_QUOTES, 'UTF-8') . '"';
     $html .= ' loading="lazy"';
-    
+
     if (!empty($classe)) {
         $html .= ' class="' . htmlspecialchars($classe, ENT_QUOTES, 'UTF-8') . '"';
     }
-    
+
     $html .= ' onerror="this.onerror=null;this.src=\'' . $url_defaut . '\'"';
     $html .= '>';
-    
+
+    if ($urlWebp) {
+        $html = '<picture><source srcset="' . htmlspecialchars($urlWebp, ENT_QUOTES, 'UTF-8') . '" type="image/webp">' . $html . '</picture>';
+    }
+
     return $html;
 }
 
@@ -171,39 +197,46 @@ function urlImage(?string $nom_fichier, string $type = 'plat'): string {
  */
 
 /**
- * Affiche une note en étoiles Bootstrap Icons
- * 
+ * Affiche une note en étoiles (SVG intégré, sans dépendance externe)
+ *
  * @param float $note Note de 0 à 5 (ex: 4.5)
  * @param string $taille Taille des étoiles : 'sm', 'md', 'lg'
  * @return string HTML des étoiles
- * 
+ *
  * Exemple : afficherEtoiles(4.5) retourne 4 étoiles pleines + 1 demi
  */
 function afficherEtoiles(float $note, string $taille = 'md'): string {
     $note = max(0, min(5, $note)); // Limiter entre 0 et 5
-    
-    // Taille CSS
-    $sizeClass = match($taille) {
-        'sm' => 'fs-6',
-        'lg' => 'fs-4',
-        default => 'fs-5'
+
+    $tailleImage = match($taille) {
+        'sm' => 14,
+        'lg' => 22,
+        default => 17,
     };
-    
-    $html = '<span class="etoiles ' . $sizeClass . '" style="color: #F7C948;">'; // Couleur jaune/or
-    
+
+    $chemin = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
+
+    $svgPlein = '<svg width="' . $tailleImage . '" height="' . $tailleImage . '" viewBox="0 0 24 24" fill="#F7C948"><path d="' . $chemin . '"/></svg>';
+    $svgVide  = '<svg width="' . $tailleImage . '" height="' . $tailleImage . '" viewBox="0 0 24 24" fill="none" stroke="#dee2e6" stroke-width="1.5"><path d="' . $chemin . '"/></svg>';
+
+    $html = '<span class="etoiles" style="display:inline-flex;align-items:center;gap:1px;">';
+
     for ($i = 1; $i <= 5; $i++) {
         if ($i <= $note) {
             // Étoile pleine
-            $html .= '<i class="bi bi-star-fill"></i>';
+            $html .= $svgPlein;
         } elseif ($i - 0.5 <= $note) {
-            // Demi-étoile
-            $html .= '<i class="bi bi-star-half"></i>';
+            // Demi-étoile : étoile vide en fond, moitié pleine superposée par-dessus
+            $html .= '<span style="position:relative;display:inline-block;width:' . $tailleImage . 'px;height:' . $tailleImage . 'px;">'
+                   . '<span style="position:absolute;inset:0;">' . $svgVide . '</span>'
+                   . '<span style="position:absolute;inset:0;width:50%;overflow:hidden;">' . $svgPlein . '</span>'
+                   . '</span>';
         } else {
             // Étoile vide
-            $html .= '<i class="bi bi-star" style="color: #dee2e6;"></i>';
+            $html .= $svgVide;
         }
     }
-    
+
     $html .= '</span>';
     return $html;
 }
@@ -499,6 +532,51 @@ function champTokenCSRF(): string {
 }
 
 /**
+ * Crée la table suivi_attempts si elle n'existe pas encore (déploiement).
+ * Sert à limiter le nombre de codes de suivi essayés par IP.
+ */
+function assurerSchemaSuiviAttempts(PDO $pdo): void {
+    try {
+        $pdo->query("SELECT 1 FROM suivi_attempts LIMIT 0");
+    } catch (PDOException $e) {
+        $pdo->exec("CREATE TABLE suivi_attempts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ip VARCHAR(45) NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_ip (ip),
+            KEY idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    }
+}
+
+/**
+ * Limite le nombre de codes de suivi essayés par IP, pour empêcher de
+ * deviner un code de commande en testant toutes les combinaisons.
+ * Autorise largement le rafraîchissement automatique d'une page de suivi
+ * légitime (toutes les 30s), tout en rendant le brute force impraticable.
+ *
+ * @return bool True si la tentative est autorisée (et alors enregistrée)
+ */
+function suiviTentativeAutorisee(PDO $pdo, string $ip): bool {
+    assurerSchemaSuiviAttempts($pdo);
+
+    $maxTentatives = 40; // par fenêtre de 15 minutes
+
+    $pdo->exec("DELETE FROM suivi_attempts WHERE created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)");
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM suivi_attempts WHERE ip = ?");
+    $stmt->execute([$ip]);
+    $nbTentatives = (int) $stmt->fetchColumn();
+
+    if ($nbTentatives >= $maxTentatives) {
+        return false;
+    }
+
+    $pdo->prepare("INSERT INTO suivi_attempts (ip) VALUES (?)")->execute([$ip]);
+    return true;
+}
+
+/**
  * =====================================================
  * FONCTIONS DE SECURITE UPLOAD
  * =====================================================
@@ -600,6 +678,8 @@ function uploadImageSecurise(array $file, string $destination, int $maxWidth = 1
         if (!redimensionnerImage($file['tmp_name'], $cheminComplet, $maxWidth, $maxHeight, $extension)) {
             return ['success' => false, 'filename' => null, 'error' => 'Erreur lors du traitement de l\'image'];
         }
+        // Générer une version WebP à côté (plus légère, servie automatiquement quand le navigateur la supporte)
+        genererVersionWebP($cheminComplet);
     } else {
         // GD non disponible : déplacer l'image sans redimensionnement
         if (!move_uploaded_file($file['tmp_name'], $cheminComplet)) {
@@ -689,7 +769,46 @@ function redimensionnerImage(string $source, string $destination, int $maxWidth,
     // Liberer la memoire
     imagedestroy($srcImage);
     imagedestroy($dstImage);
-    
+
+    return $result;
+}
+
+/**
+ * Génère une version .webp d'une image déjà enregistrée sur le disque, à côté de l'originale.
+ * N'échoue jamais bruyamment : une image déjà en webp, ou une erreur GD, laisse simplement
+ * l'image d'origine seule (afficherImagePlat/afficherImageResto s'en contentent).
+ *
+ * @param string $cheminFichier Chemin disque de l'image source (jpg/jpeg/png)
+ * @return bool True si la version .webp a été créée
+ */
+function genererVersionWebP(string $cheminFichier): bool {
+    if (!extension_loaded('gd') || !function_exists('imagewebp') || !file_exists($cheminFichier)) {
+        return false;
+    }
+
+    $info = @getimagesize($cheminFichier);
+    if (!$info) {
+        return false;
+    }
+
+    $image = match ($info['mime']) {
+        'image/jpeg' => imagecreatefromjpeg($cheminFichier),
+        'image/png'  => imagecreatefrompng($cheminFichier),
+        default      => null, // déjà en webp, ou format non pris en charge
+    };
+    if (!$image) {
+        return false;
+    }
+
+    if ($info['mime'] === 'image/png') {
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+    }
+
+    $cheminWebp = preg_replace('/\.[^.\/]+$/', '.webp', $cheminFichier);
+    $result = imagewebp($image, $cheminWebp, 82);
+    imagedestroy($image);
+
     return $result;
 }
 

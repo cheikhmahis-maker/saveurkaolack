@@ -33,83 +33,40 @@ $links = [
     ['to' => 'suivi', 'label' => 'Suivre ma commande'],
     ['to' => 'partenaire', 'label' => 'Devenir partenaire'],
 ];
+
+// Métadonnées SEO / partage (chaque page peut définir $pageDescription et $pageImage avant d'inclure header.php)
+$metaTitre       = (isset($pageTitle) ? $pageTitle . ' - ' : '') . 'Saveur Kaolack';
+$metaDescription = $pageDescription ?? SITE_SLOGAN;
+$metaImage       = $pageImage ?? (UPLOADS_URL . 'hero.jpg');
+$metaProtocole   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$metaUrlActuelle = $metaProtocole . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($pageTitle) ? $pageTitle . ' - ' : ''; ?>Saveur Kaolack</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title><?php echo htmlspecialchars($metaTitre); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars($metaDescription); ?>">
+    <link rel="canonical" href="<?php echo htmlspecialchars($metaUrlActuelle); ?>">
+
+    <!-- Partage réseaux sociaux (WhatsApp, Facebook, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Saveur Kaolack">
+    <meta property="og:locale" content="fr_SN">
+    <meta property="og:title" content="<?php echo htmlspecialchars($metaTitre); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars($metaDescription); ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars($metaImage); ?>">
+    <meta property="og:url" content="<?php echo htmlspecialchars($metaUrlActuelle); ?>">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo htmlspecialchars($metaTitre); ?>">
+    <meta name="twitter:description" content="<?php echo htmlspecialchars($metaDescription); ?>">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars($metaImage); ?>">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap');
-        
-        :root {
-            --background: 38 44% 96%;
-            --foreground: 20 30% 14%;
-            --card: 36 50% 98%;
-            --card-foreground: 20 30% 14%;
-            --primary: 14 72% 46%;
-            --primary-foreground: 38 60% 97%;
-            --secondary: 36 78% 92%;
-            --secondary-foreground: 20 40% 18%;
-            --muted: 36 30% 92%;
-            --muted-foreground: 25 15% 42%;
-            --accent: 142 38% 32%;
-            --accent-foreground: 38 60% 97%;
-            --saffron: 38 92% 52%;
-            --saffron-foreground: 20 50% 14%;
-            --destructive: 0 75% 48%;
-            --destructive-foreground: 38 60% 97%;
-            --border: 30 25% 86%;
-            --input: 30 25% 86%;
-            --ring: 14 72% 46%;
-            --radius: 1rem;
-        }
-        
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: hsl(38 44% 96%);
-            color: hsl(20 30% 14%);
-        }
-        
-        h1, h2, h3, h4 {
-            font-family: 'Fraunces', Georgia, serif;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-        
-        .font-display {
-            font-family: 'Fraunces', Georgia, serif;
-        }
-        
-        .bg-gradient-warm {
-            background: linear-gradient(135deg, hsl(14 72% 46%), hsl(28 88% 56%));
-        }
-        
-        .bg-gradient-sun {
-            background: linear-gradient(180deg, hsl(38 92% 60%), hsl(18 85% 55%));
-        }
-        
-        .shadow-warm {
-            box-shadow: 0 20px 50px -20px hsl(14 72% 35% / 0.35);
-        }
-        
-        .shadow-soft {
-            box-shadow: 0 8px 24px -12px hsl(20 40% 20% / 0.18);
-        }
-        
-        .shadow-card {
-            box-shadow: 0 2px 12px -4px hsl(20 40% 20% / 0.1);
-        }
-        
-        .text-balance {
-            text-wrap: balance;
-        }
-    </style>
+    <link href="<?php echo ASSETS_URL; ?>css/tailwind.css" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-[hsl(38_44%_96%)]">
     <?php if ($isDashboardPage): ?>
@@ -181,13 +138,13 @@ $links = [
                 <?php if ($_SESSION['role'] === 'restaurant'): ?>
                     <a href="<?php echo BASE_URL; ?>dashboard_resto.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Dashboard</a>
                     <a href="<?php echo BASE_URL; ?>commandes.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Commandes</a>
-                    <a href="<?php echo BASE_URL; ?>menu.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Mon Menu</a>
+                    <a href="<?php echo BASE_URL; ?>mes_plats.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Mon Menu</a>
                     <a href="<?php echo BASE_URL; ?>profil.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Profil</a>
                 <?php elseif ($_SESSION['role'] === 'admin'): ?>
                     <a href="<?php echo BASE_URL; ?>admin/index.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Admin</a>
                     <a href="<?php echo BASE_URL; ?>admin/restaurants.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Restaurants</a>
                     <a href="<?php echo BASE_URL; ?>admin/commandes.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Commandes</a>
-                    <a href="<?php echo BASE_URL; ?>admin/clients.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Clients</a>
+                    <a href="<?php echo BASE_URL; ?>admin/utilisateurs.php" class="text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">Clients</a>
                 <?php endif; ?>
             </nav>
             <?php endif; ?>
@@ -211,7 +168,7 @@ $links = [
                             Mon Profil
                         </a>
                     <?php endif; ?>
-                    <a href="<?php echo BASE_URL; ?>deconnexion.php" class="hidden md:inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Déconnexion">
+                    <a href="<?php echo BASE_URL; ?>deconnexion.php" aria-label="Déconnexion" class="hidden md:inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Déconnexion">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
@@ -219,7 +176,7 @@ $links = [
                     </a>
                 <?php else: ?>
                     <!-- Non connecté -->
-                    <a href="<?php echo BASE_URL; ?>connexion.php" class="hidden md:inline-flex p-2 text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">
+                    <a href="<?php echo BASE_URL; ?>connexion.php" aria-label="Connexion" title="Connexion" class="hidden md:inline-flex p-2 text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -235,7 +192,7 @@ $links = [
                 </a>
                 <?php endif; ?>
                 <!-- Mobile menu button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">
+                <button id="mobile-menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu" class="md:hidden p-2 text-[hsl(25_15%_42%)] hover:text-[hsl(20_30%_14%)] transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -258,14 +215,14 @@ $links = [
                     <!-- Liens dashboard pour restaurant -->
                     <a href="<?php echo BASE_URL; ?>dashboard_resto.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Dashboard</a>
                     <a href="<?php echo BASE_URL; ?>commandes.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Commandes</a>
-                    <a href="<?php echo BASE_URL; ?>menu.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Mon Menu</a>
+                    <a href="<?php echo BASE_URL; ?>mes_plats.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Mon Menu</a>
                     <a href="<?php echo BASE_URL; ?>profil.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Profil</a>
                 <?php elseif ($_SESSION['role'] === 'admin'): ?>
                     <!-- Liens admin -->
                     <a href="<?php echo BASE_URL; ?>admin/index.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Admin</a>
                     <a href="<?php echo BASE_URL; ?>admin/restaurants.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Restaurants</a>
                     <a href="<?php echo BASE_URL; ?>admin/commandes.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Commandes</a>
-                    <a href="<?php echo BASE_URL; ?>admin/clients.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Clients</a>
+                    <a href="<?php echo BASE_URL; ?>admin/utilisateurs.php" class="py-2.5 text-sm font-medium text-[hsl(20_30%_14%)]">Clients</a>
                 <?php endif; ?>
                 <div class="mt-2 flex gap-2 border-t border-[hsl(30_25%_86%)]/60 pt-3">
                     <?php if (!empty($_SESSION['id'])): ?>
@@ -309,7 +266,9 @@ $links = [
         // Mobile menu toggle
         document.getElementById('mobile-menu-btn').addEventListener('click', function() {
             const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+            const ouvert = menu.classList.toggle('hidden') === false;
+            this.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+            this.setAttribute('aria-label', ouvert ? 'Fermer le menu' : 'Ouvrir le menu');
         });
     </script>
     <?php endif; ?>

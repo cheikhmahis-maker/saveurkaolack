@@ -104,7 +104,7 @@ $date_jour = date('d/m/Y');
             </a>
             
             <div class="pt-4 mt-4 border-t border-white/10">
-                <a href="../index.php" target="_blank" class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:bg-white/10 transition-colors">
+                <a href="../index.php" target="_blank" rel="noopener" class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:bg-white/10 transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     Voir le site
                 </a>
@@ -248,7 +248,7 @@ $date_jour = date('d/m/Y');
                                 <td class="px-4 py-3 text-[hsl(25_15%_42%)]"><?php echo date('d/m/Y', strtotime($r['created_at'])); ?></td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <a href="../restaurant.php?id=<?php echo $r['id']; ?>" target="_blank" class="px-3 py-1.5 bg-[hsl(30_25%_86%)] text-[hsl(25_15%_42%)] text-xs font-medium rounded-lg hover:bg-[hsl(36_30%_92%)] transition-colors">
+                                        <a href="../restaurant.php?id=<?php echo $r['id']; ?>" target="_blank" rel="noopener" class="px-3 py-1.5 bg-[hsl(30_25%_86%)] text-[hsl(25_15%_42%)] text-xs font-medium rounded-lg hover:bg-[hsl(36_30%_92%)] transition-colors">
                                             Voir
                                         </a>
                                         <button onclick="ouvrirModalEmail(this)"
@@ -339,7 +339,7 @@ $date_jour = date('d/m/Y');
     </div>
 </div>
 
-<script src="../assets/js/dashboard_admin.js"></script>
+<script src="../assets/js/dashboard_admin.min.js"></script>
 
 <script>
 const CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;

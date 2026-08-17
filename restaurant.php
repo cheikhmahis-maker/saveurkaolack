@@ -103,8 +103,44 @@ $pageTitle = $restaurant['nom'];
 // Déterminer si ouvert (utilise la fonction robuste)
 $isOpen = estRestaurantOuvert($restaurant['heure_ouverture'], $restaurant['heure_fermeture']);
 
+// Métadonnées SEO / partage pour cette page restaurant
+$pageDescription = !empty($restaurant['description'])
+    ? mb_substr(trim($restaurant['description']), 0, 155)
+    : 'Commandez chez ' . $restaurant['nom'] . ' à ' . ($restaurant['quartier'] ?: 'Kaolack') . ' — livraison via Saveur Kaolack.';
+$pageImage = urlImage($restaurant['photo_banniere'] ?? null, 'banniere');
+
 require_once 'includes/header.php';
+
+// Données structurées pour Google (fiche restaurant enrichie dans les résultats de recherche)
+$jsonLdRestaurant = [
+    '@context'  => 'https://schema.org',
+    '@type'     => 'Restaurant',
+    'name'      => $restaurant['nom'],
+    'image'     => $pageImage,
+    'telephone' => $restaurant['telephone'] ?: null,
+    'servesCuisine' => $restaurant['categorie_nom'] ?? null,
+    'address'   => array_filter([
+        '@type'           => 'PostalAddress',
+        'streetAddress'   => $restaurant['adresse'] ?: null,
+        'addressLocality' => $restaurant['quartier'] ?: 'Kaolack',
+        'addressCountry'  => 'SN',
+    ], fn($v) => $v !== null),
+    'openingHoursSpecification' => [
+        '@type'    => 'OpeningHoursSpecification',
+        'opens'    => substr($restaurant['heure_ouverture'], 0, 5),
+        'closes'   => substr($restaurant['heure_fermeture'], 0, 5),
+    ],
+];
+if ((float) $restaurant['nb_avis'] > 0) {
+    $jsonLdRestaurant['aggregateRating'] = [
+        '@type'       => 'AggregateRating',
+        'ratingValue' => (string) $restaurant['note_moyenne'],
+        'reviewCount' => (string) $restaurant['nb_avis'],
+    ];
+}
+$jsonLdRestaurant = array_filter($jsonLdRestaurant, fn($v) => $v !== null);
 ?>
+<script type="application/ld+json"><?php echo json_encode($jsonLdRestaurant, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?></script>
 <!-- Hero Restaurant -->
 <section class="relative">
     <!-- Bannière -->

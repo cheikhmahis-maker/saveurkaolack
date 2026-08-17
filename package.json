@@ -1,0 +1,28 @@
+{
+  "name": "saveur-php",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./assets/css/tailwind-input.css -o ./assets/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./assets/css/tailwind-input.css -o ./assets/css/tailwind.css --watch",
+    "build:js": "terser assets/js/chatbot.js -o assets/js/chatbot.min.js -c -m && terser assets/js/dashboard_admin.js -o assets/js/dashboard_admin.min.js -c -m"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cheikhmahis-maker/saveurkaolack.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/cheikhmahis-maker/saveurkaolack/issues"
+  },
+  "homepage": "https://github.com/cheikhmahis-maker/saveurkaolack#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19",
+    "terser": "^5.50.0"
+  }
+}

@@ -202,10 +202,12 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ─── DONNÉES DE TEST ─────────────────────────────────
 
 -- Compte admin
--- ⚠️  Changer le mot de passe après installation via :
---     http://localhost/saveur-php/changer_mdp_admin.php
+-- ⚠️  Ce hash ne correspond à AUCUN mot de passe connu (généré à partir d'une
+-- valeur aléatoire jetée). Après une installation depuis ce fichier, définir le
+-- mot de passe admin via la page "mot de passe oublié" (mot_de_passe_oublie.php)
+-- avec l'email ci-dessous — ne jamais réutiliser un hash commité sur un dépôt.
 INSERT INTO `utilisateurs` (`nom`, `prenom`, `email`, `password`, `role`, `statut`) VALUES
-('Admin', 'System', 'admin@saveurkaolack.sn', '$2y$12$lHdw3CJurxSVNAEbFa7wcu5LrCwTYXD8.Hyftu3T7gWAbrEr.6gKi', 'admin', 'actif');
+('Admin', 'System', 'admin@saveurkaolack.sn', '$2y$12$SBqsoLlnjmUhlLqPkQKYwekKvN7rU7JhprhRNzQS2jgfaCXnbIFpO', 'admin', 'actif');
 
 -- Catégories
 INSERT INTO `categories` (`nom`, `icone`, `ordre_affichage`) VALUES

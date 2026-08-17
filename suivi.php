@@ -29,9 +29,17 @@ elseif (isset($_COOKIE['dernier_code_suivi'])) {
 $commande = null;
 $erreur = '';
 
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$suiviAutorise = true;
+
 if (!empty($token)) {
     try {
         $pdo = getDB();
+
+        if (!suiviTentativeAutorisee($pdo, $ip)) {
+            $suiviAutorise = false;
+            $erreur = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
+        } else {
         assurerSchemaAvis($pdo);
 
         // Chercher la commande par son numéro
@@ -44,7 +52,7 @@ if (!empty($token)) {
         ");
         $stmt->execute([strtoupper($token)]);
         $commande = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$commande) {
             $erreur = "Aucune commande trouvée avec ce code.";
             // Effacer le cookie si la commande n'existe plus
@@ -54,7 +62,8 @@ if (!empty($token)) {
         elseif (in_array($commande['statut'], ['livree', 'annulee'])) {
             setcookie('dernier_code_suivi', '', time() - 3600, '/');
         }
-        
+        }
+
     } catch (PDOException $e) {
         $erreur = "Erreur de connexion à la base de données.";
     }
@@ -62,7 +71,7 @@ if (!empty($token)) {
 
 // Traitement de l'annulation
 $message = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['annuler_commande']) && !empty($token)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['annuler_commande']) && !empty($token) && $suiviAutorise) {
     // Vérifier le token CSRF
     if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
         $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";
@@ -107,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['annuler_commande']) &
 }
 
 // Traitement de l'avis apres livraison
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['laisser_avis']) && !empty($token)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['laisser_avis']) && !empty($token) && $suiviAutorise) {
     // Vérifier le token CSRF
     if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
         $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";

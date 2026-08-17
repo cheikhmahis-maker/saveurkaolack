@@ -246,7 +246,7 @@ require_once 'includes/header.php';
                             $message_whatsapp = urlencode($message);
                         ?>
                         <a href="https://wa.me/<?php echo htmlspecialchars(substr($cmd['telephone_whatsapp'], 1)); ?>?text=<?php echo $message_whatsapp; ?>"
-                           target="_blank"
+                           target="_blank" rel="noopener noreferrer"
                            class="inline-flex items-center gap-1 rounded-lg bg-green-500 px-2 py-1 text-xs font-medium text-white hover:bg-green-600 transition-colors"
                            title="Envoyer les détails par WhatsApp">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
