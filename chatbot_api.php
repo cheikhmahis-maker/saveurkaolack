@@ -10,6 +10,7 @@ header('Content-Type: application/json');
 
 require_once 'includes/config.php';
 require_once 'includes/db.php';
+require_once 'includes/fonctions.php';
 
 // === RATE LIMITING : 10 messages par minute par IP ===
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
