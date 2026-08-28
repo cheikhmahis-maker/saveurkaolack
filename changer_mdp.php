@@ -1,6 +1,6 @@
 <?php
 /**
- * CHANGER MOT DE PASSE - Page de changement de mot de passe pour restaurant
+ * CHANGER MOT DE PASSE / EMAIL - Page de gestion du compte (client, restaurant, admin)
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -22,66 +22,107 @@ $user_role = $_SESSION['role'];
 // Client, restaurant et admin partagent tous la même table utilisateurs (voir connexion.php)
 $table = 'utilisateurs';
 
+// Lien de retour et libellés adaptés au rôle connecté
+$retourUrl = match ($user_role) {
+    'admin'      => 'admin/index.php',
+    'restaurant' => 'dashboard_resto.php',
+    default      => 'profil_client.php',
+};
+$sousTitre = match ($user_role) {
+    'admin'      => 'Sécurisez votre compte administrateur',
+    'restaurant' => 'Sécurisez votre compte restaurant',
+    default      => 'Sécurisez votre compte',
+};
+
 $message = '';
 $erreur = '';
+$email_actuel = $_SESSION['email'] ?? '';
 
 // Connexion BDD
 try {
     $pdo = getDB();
-    
+
+    // Récupérer l'email actuel depuis la BDD (source de vérité)
+    $stmt = $pdo->prepare("SELECT email FROM {$table} WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($userRow) {
+        $email_actuel = $userRow['email'];
+    }
+
     // TRAITEMENT DU FORMULAIRE
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $ancien_mdp = $_POST['ancien_mdp'] ?? '';
-        $nouveau_mdp = $_POST['nouveau_mdp'] ?? '';
-        $confirmation_mdp = $_POST['confirmation_mdp'] ?? '';
+        $ancien_mdp        = $_POST['ancien_mdp'] ?? '';
+        $nouvel_email      = trim($_POST['email'] ?? $email_actuel);
+        $nouveau_mdp       = $_POST['nouveau_mdp'] ?? '';
+        $confirmation_mdp  = $_POST['confirmation_mdp'] ?? '';
+
+        $emailChange = ($nouvel_email !== '' && $nouvel_email !== $email_actuel);
+        $mdpChange   = ($nouveau_mdp !== '' || $confirmation_mdp !== '');
 
         if (!verifierTokenCSRF($_POST['csrf_token'] ?? '')) {
             $erreur = "Erreur de sécurité : session invalide. Veuillez réessayer.";
-        }
-        // Vérifier que les champs sont remplis
-        elseif (empty($ancien_mdp) || empty($nouveau_mdp) || empty($confirmation_mdp)) {
-            $erreur = "Tous les champs sont obligatoires.";
-        }
-        // Vérifier que le nouveau mot de passe fait au moins 6 caractères
-        elseif (strlen($nouveau_mdp) < 6) {
+        } elseif (empty($ancien_mdp)) {
+            $erreur = "Entrez votre mot de passe actuel pour confirmer les changements.";
+        } elseif (!$emailChange && !$mdpChange) {
+            $erreur = "Vous n'avez rien modifié.";
+        } elseif ($emailChange && !filter_var($nouvel_email, FILTER_VALIDATE_EMAIL)) {
+            $erreur = "L'adresse email n'est pas valide.";
+        } elseif ($mdpChange && strlen($nouveau_mdp) < 6) {
             $erreur = "Le nouveau mot de passe doit faire au moins 6 caractères.";
-        }
-        // Vérifier que les mots de passe correspondent
-        elseif ($nouveau_mdp !== $confirmation_mdp) {
+        } elseif ($mdpChange && $nouveau_mdp !== $confirmation_mdp) {
             $erreur = "La confirmation ne correspond pas au nouveau mot de passe.";
-        }
-        else {
-            // Vérifier l'ancien mot de passe (dans la bonne table selon le rôle)
+        } else {
+            // Vérifier le mot de passe actuel
             $stmt = $pdo->prepare("SELECT password FROM {$table} WHERE id = ?");
             $stmt->execute([$user_id]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$user) {
                 $erreur = "Utilisateur non trouvé.";
-            }
-            // Si le mot de passe est en clair (ancien format) ou hashé
-            elseif (!password_verify($ancien_mdp, $user['password']) && $ancien_mdp !== $user['password']) {
-                $erreur = "L'ancien mot de passe est incorrect.";
-            }
-            else {
-                // Hasher le nouveau mot de passe
-                $hash = password_hash($nouveau_mdp, PASSWORD_DEFAULT);
-                
-                // Mettre à jour dans la bonne table
-                $stmt = $pdo->prepare("UPDATE {$table} SET password = ? WHERE id = ?");
-                $stmt->execute([$hash, $user_id]);
-                
-                $message = "Mot de passe changé avec succès !";
+            } elseif (!password_verify($ancien_mdp, $user['password']) && $ancien_mdp !== $user['password']) {
+                $erreur = "Le mot de passe actuel est incorrect.";
+            } elseif ($emailChange && (function () use ($pdo, $nouvel_email, $user_id, $table) {
+                $stmt = $pdo->prepare("SELECT id FROM {$table} WHERE email = ? AND id != ? LIMIT 1");
+                $stmt->execute([$nouvel_email, $user_id]);
+                return (bool) $stmt->fetch();
+            })()) {
+                $erreur = "Cette adresse email est déjà utilisée par un autre compte.";
+            } else {
+                $champs = [];
+                $valeurs = [];
+
+                if ($emailChange) {
+                    $champs[]  = 'email = ?';
+                    $valeurs[] = $nouvel_email;
+                }
+                if ($mdpChange) {
+                    $champs[]  = 'password = ?';
+                    $valeurs[] = password_hash($nouveau_mdp, PASSWORD_DEFAULT);
+                }
+                $valeurs[] = $user_id;
+
+                $stmt = $pdo->prepare("UPDATE {$table} SET " . implode(', ', $champs) . " WHERE id = ?");
+                $stmt->execute($valeurs);
+
+                if ($emailChange) {
+                    $_SESSION['email'] = $nouvel_email;
+                    $email_actuel = $nouvel_email;
+                }
+
+                $message = $emailChange && $mdpChange
+                    ? "Email et mot de passe mis à jour avec succès !"
+                    : ($emailChange ? "Email mis à jour avec succès !" : "Mot de passe changé avec succès !");
             }
         }
     }
-    
+
 } catch (PDOException $e) {
     error_log('Erreur changer_mdp: ' . $e->getMessage());
     $erreur = 'Une erreur technique est survenue. Veuillez réessayer.';
 }
 
-$pageTitle = 'Changer mon mot de passe';
+$pageTitle = 'Mon compte';
 require_once 'includes/header.php';
 ?>
 
@@ -92,48 +133,59 @@ require_once 'includes/header.php';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
         </div>
-        <h1 class="font-display text-2xl font-bold text-[hsl(20_30%_14%)]">Changer mon mot de passe</h1>
-        <p class="text-[hsl(25_15%_42%)]">Sécurisez votre compte restaurant</p>
+        <h1 class="font-display text-2xl font-bold text-[hsl(20_30%_14%)]">Mon compte</h1>
+        <p class="text-[hsl(25_15%_42%)]"><?php echo htmlspecialchars($sousTitre); ?></p>
     </div>
 
     <div class="rounded-2xl bg-[hsl(36_50%_98%)] border border-[hsl(30_25%_86%)] p-6 shadow-soft">
         <?php if ($message): ?>
         <div class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700">
-            <?php echo $message; ?>
+            <?php echo htmlspecialchars($message); ?>
         </div>
         <?php endif; ?>
 
         <?php if ($erreur): ?>
         <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            <?php echo $erreur; ?>
+            <?php echo htmlspecialchars($erreur); ?>
         </div>
         <?php endif; ?>
 
         <form method="POST" class="space-y-4">
             <?php echo champTokenCSRF(); ?>
+
             <div>
-                <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Ancien mot de passe</label>
-                <input type="password" name="ancien_mdp" required class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
+                <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Email</label>
+                <input type="email" name="email" value="<?php echo htmlspecialchars($email_actuel); ?>" required class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
             </div>
-            
+
+            <div class="pt-2 border-t border-[hsl(30_25%_86%)]">
+                <p class="text-xs uppercase tracking-wide text-[hsl(25_15%_42%)] mt-4 mb-1">Nouveau mot de passe (optionnel)</p>
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Nouveau mot de passe</label>
-                <input type="password" name="nouveau_mdp" required minlength="6" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
-                <p class="text-xs text-gray-500 mt-1">Minimum 6 caractères</p>
+                <input type="password" name="nouveau_mdp" minlength="6" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
+                <p class="text-xs text-gray-500 mt-1">Laissez vide pour garder le même mot de passe. Minimum 6 caractères sinon.</p>
             </div>
-            
+
             <div>
                 <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1">Confirmer le nouveau mot de passe</label>
-                <input type="password" name="confirmation_mdp" required class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
+                <input type="password" name="confirmation_mdp" class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
             </div>
-            
+
+            <div class="pt-2 border-t border-[hsl(30_25%_86%)]">
+                <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-1 mt-4">Mot de passe actuel <span class="text-red-500">*</span></label>
+                <input type="password" name="ancien_mdp" required class="w-full rounded-xl border border-[hsl(30_25%_86%)] px-4 py-2 focus:border-[hsl(14_72%_46%)] focus:outline-none">
+                <p class="text-xs text-gray-500 mt-1">Obligatoire pour confirmer tout changement.</p>
+            </div>
+
             <button type="submit" class="w-full rounded-xl bg-[hsl(14_72%_46%)] px-4 py-2 font-medium text-white hover:bg-[hsl(14_72%_40%)] transition-colors">
-                🔒 Changer mon mot de passe
+                🔒 Enregistrer les modifications
             </button>
         </form>
-        
+
         <div class="mt-6 pt-4 border-t border-[hsl(30_25%_86%)] text-center">
-            <a href="dashboard_resto.php" class="text-[hsl(14_72%_46%)] hover:underline text-sm">← Retour au dashboard</a>
+            <a href="<?php echo htmlspecialchars($retourUrl); ?>" class="text-[hsl(14_72%_46%)] hover:underline text-sm">← Retour au dashboard</a>
         </div>
     </div>
 </section>

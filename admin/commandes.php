@@ -100,6 +100,10 @@ try {
             </a>
             
             <div class="pt-4 mt-4 border-t border-white/10">
+                <a href="../changer_mdp.php" class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:bg-white/10 transition-colors">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Mon compte
+                </a>
                 <a href="../index.php" target="_blank" rel="noopener" class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:bg-white/10 transition-colors">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     Voir le site
@@ -169,6 +173,25 @@ try {
                 </div>
             </div>
             
+            <!-- EXPORT CSV -->
+            <div class="bg-white rounded-2xl border border-[hsl(30_25%_86%)] shadow-soft p-4">
+                <form method="GET" action="export_commandes.php" target="_blank" class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-[hsl(25_15%_42%)] mb-1">Du (optionnel)</label>
+                        <input type="date" name="date_debut" class="rounded-lg border border-[hsl(30_25%_86%)] px-3 py-1.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[hsl(25_15%_42%)] mb-1">Au (optionnel)</label>
+                        <input type="date" name="date_fin" class="rounded-lg border border-[hsl(30_25%_86%)] px-3 py-1.5 text-sm">
+                    </div>
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[hsl(14_72%_46%)] px-4 py-2 text-sm font-medium text-white hover:bg-[hsl(14_72%_40%)] transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Exporter en CSV
+                    </button>
+                    <p class="text-xs text-[hsl(25_15%_42%)] w-full sm:w-auto">Laissez les dates vides pour exporter toutes les commandes.</p>
+                </form>
+            </div>
+
             <!-- TABLEAU -->
             <div class="bg-white rounded-2xl border border-[hsl(30_25%_86%)] shadow-soft overflow-hidden">
                 <div class="px-6 py-4 border-b border-[hsl(30_25%_86%)]">
