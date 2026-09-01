@@ -10,7 +10,9 @@ includes/secrets.php
 uploads/
 
 # ─── Logs ────────────────────────────────────────────────────────────────────
-logs/
+logs/*
+!logs/.gitkeep
+!logs/.htaccess
 *.log
 
 # ─── Environnement & dépendances ─────────────────────────────────────────────

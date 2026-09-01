@@ -222,7 +222,7 @@ try {
                                     $badge_class = match($cmd['statut']) {
                                         'en_attente' => 'bg-red-100 text-red-700',
                                         'en_preparation' => 'bg-blue-100 text-blue-700',
-                                        'en_livraison' => 'bg-purple-100 text-purple-700',
+                                        'en_route' => 'bg-purple-100 text-purple-700',
                                         'livree' => 'bg-green-100 text-green-700',
                                         'annulee' => 'bg-gray-100 text-gray-600',
                                         default => 'bg-gray-100 text-gray-600'
@@ -230,7 +230,7 @@ try {
                                     $label = match($cmd['statut']) {
                                         'en_attente' => 'Reçue',
                                         'en_preparation' => 'Préparation',
-                                        'en_livraison' => 'Livraison',
+                                        'en_route' => 'Livraison',
                                         'livree' => 'Livrée',
                                         'annulee' => 'Annulée',
                                         default => $cmd['statut']

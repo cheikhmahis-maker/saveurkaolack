@@ -38,7 +38,7 @@ try {
             $erreur = "Votre essai gratuit est terminé. Contactez l'administrateur pour réactiver votre compte.";
         } else {
         $commande_id = intval($_POST['commande_id']);
-        $statuts_valides = ['en_attente', 'en_preparation', 'en_livraison', 'livree', 'annulee'];
+        $statuts_valides = ['en_attente', 'en_preparation', 'en_route', 'livree', 'annulee'];
         $nouveau_statut = in_array($_POST['nouveau_statut'], $statuts_valides) ? $_POST['nouveau_statut'] : 'en_attente';
         
         // Si annulation, sauvegarder la raison si fournie
@@ -130,7 +130,7 @@ require_once 'includes/header.php';
                     switch($cmd['statut']) {
                         case 'en_attente': echo 'bg-yellow-100 text-yellow-700'; break;
                         case 'en_preparation': echo 'bg-blue-100 text-blue-700'; break;
-                        case 'en_livraison': echo 'bg-purple-100 text-purple-700'; break;
+                        case 'en_route': echo 'bg-purple-100 text-purple-700'; break;
                         case 'livree': echo 'bg-green-100 text-green-700'; break;
                         case 'annulee': echo 'bg-red-100 text-red-700'; break;
                         default: echo 'bg-gray-100 text-gray-700';
@@ -140,7 +140,7 @@ require_once 'includes/header.php';
                     switch($cmd['statut']) {
                         case 'en_attente': echo '⏳ En attente'; break;
                         case 'en_preparation': echo '👨‍🍳 En préparation'; break;
-                        case 'en_livraison': echo '🛵 En livraison'; break;
+                        case 'en_route': echo '🛵 En livraison'; break;
                         case 'livree': echo '✅ Livrée'; break;
                         case 'annulee': echo '❌ Annulée'; break;
                         default: echo $cmd['statut'];
@@ -198,7 +198,7 @@ require_once 'includes/header.php';
                             $statut_labels = [
                                 'en_attente' => 'En attente de confirmation',
                                 'preparation' => 'En préparation',
-                                'en_livraison' => 'En cours de livraison',
+                                'en_route' => 'En cours de livraison',
                                 'livree' => 'Livrée',
                                 'annulee' => 'Annulée'
                             ];
@@ -336,7 +336,7 @@ require_once 'includes/header.php';
                     <span class="text-sm text-[hsl(25_15%_42%)]">Mettre à jour :</span>
                     <select name="nouveau_statut" class="text-sm rounded-lg border border-[hsl(30_25%_86%)] px-2 py-1 bg-white">
                         <option value="en_preparation" <?php echo $cmd['statut'] === 'en_preparation' ? 'selected' : ''; ?>>👨‍🍳 En préparation</option>
-                        <option value="en_livraison" <?php echo $cmd['statut'] === 'en_livraison' ? 'selected' : ''; ?>>🛵 En livraison</option>
+                        <option value="en_route" <?php echo $cmd['statut'] === 'en_route' ? 'selected' : ''; ?>>🛵 En livraison</option>
                         <option value="livree">✅ Livrée</option>
                     </select>
                     <button type="submit" class="text-sm bg-[hsl(14_72%_46%)] text-white px-3 py-1 rounded-lg hover:bg-[hsl(14_72%_40%)] transition-colors">Mettre à jour</button>

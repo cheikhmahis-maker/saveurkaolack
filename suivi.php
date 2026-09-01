@@ -241,7 +241,7 @@ require_once 'includes/header.php';
                     <?php 
                     switch($commande['statut']) {
                         case 'livree': echo 'bg-green-100 text-green-700'; break;
-                        case 'en_livraison': echo 'bg-blue-100 text-blue-700'; break;
+                        case 'en_route': echo 'bg-blue-100 text-blue-700'; break;
                         case 'en_preparation': echo 'bg-yellow-100 text-yellow-700'; break;
                         case 'annulee': echo 'bg-red-100 text-red-700'; break;
                         default: echo 'bg-orange-100 text-orange-700';
@@ -252,7 +252,7 @@ require_once 'includes/header.php';
                     $labels = [
                         'en_attente' => 'En attente',
                         'en_preparation' => 'En préparation',
-                        'en_livraison' => 'En livraison',
+                        'en_route' => 'En livraison',
                         'livree' => 'Livrée',
                         'annulee' => 'Annulée'
                     ];
@@ -266,8 +266,8 @@ require_once 'includes/header.php';
             $statut = $commande['statut'];
             $steps = [
                 ['label' => 'Commande reçue', 'done' => true],
-                ['label' => 'En préparation', 'done' => in_array($statut, ['en_preparation', 'en_livraison', 'livree'])],
-                ['label' => 'En livraison', 'done' => in_array($statut, ['en_livraison', 'livree'])],
+                ['label' => 'En préparation', 'done' => in_array($statut, ['en_preparation', 'en_route', 'livree'])],
+                ['label' => 'En livraison', 'done' => in_array($statut, ['en_route', 'livree'])],
                 ['label' => 'Livrée', 'done' => $statut === 'livree'],
             ];
             if ($statut === 'annulee') {
@@ -349,7 +349,7 @@ require_once 'includes/header.php';
                     </div>
                 </div>
             </div>
-            <?php elseif (in_array($commande['statut'], ['en_preparation', 'en_livraison'])): ?>
+            <?php elseif (in_array($commande['statut'], ['en_preparation', 'en_route'])): ?>
             <!-- Message : ne peut plus annuler -->
             <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
                 <div class="flex items-start gap-3">

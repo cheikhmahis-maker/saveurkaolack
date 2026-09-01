@@ -75,6 +75,16 @@ $nomFichier = 'commandes_' . date('Y-m-d_His') . '.csv';
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $nomFichier . '"');
 
+// Empêche l'injection de formule dans Excel/LibreOffice : préfixe d'une apostrophe
+// toute valeur commençant par =, +, -, @ (sinon Excel l'interprète comme une formule).
+function csvChampSecurise($valeur) {
+    $valeur = (string) $valeur;
+    if ($valeur !== '' && in_array($valeur[0], ['=', '+', '-', '@'], true)) {
+        return "'" . $valeur;
+    }
+    return $valeur;
+}
+
 $out = fopen('php://output', 'w');
 
 // BOM UTF-8 : nécessaire pour qu'Excel affiche correctement les accents français
@@ -92,10 +102,10 @@ foreach ($commandes as $cmd) {
         $cmd['numero_tracking'] ?? '',
         date('d/m/Y H:i', strtotime($cmd['created_at'])),
         $cmd['resto_nom'] ?? '',
-        trim(($infos['prenom'] ?? '') . ' ' . ($infos['nom'] ?? '')),
-        $infos['telephone'] ?? '',
-        $infos['email'] ?? '',
-        $infos['adresse'] ?? '',
+        csvChampSecurise(trim(($infos['prenom'] ?? '') . ' ' . ($infos['nom'] ?? ''))),
+        csvChampSecurise($infos['telephone'] ?? ''),
+        csvChampSecurise($infos['email'] ?? ''),
+        csvChampSecurise($infos['adresse'] ?? ''),
         $cmd['total'] ?? 0,
         $statutsLabels[$cmd['statut']] ?? $cmd['statut'],
         $paiementLabels[$cmd['mode_paiement']] ?? $cmd['mode_paiement'],

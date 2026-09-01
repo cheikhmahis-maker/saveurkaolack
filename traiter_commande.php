@@ -89,7 +89,7 @@ function _envoyerNotificationsRestaurant(array $restaurant, string $prenom, stri
 function genererNumeroTracking(): string {
     $prefix = 'SK';
     $date   = date('ymd');
-    $random = strtoupper(bin2hex(random_bytes(2)));
+    $random = strtoupper(bin2hex(random_bytes(5))); // 10 caractères hex : tient dans numero_tracking VARCHAR(20)
     return $prefix . '-' . $date . '-' . $random;
 }
 

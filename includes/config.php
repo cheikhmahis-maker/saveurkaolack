@@ -8,8 +8,11 @@
 
 // ─── Environnement — détecté automatiquement ─────────────────────────────────
 // localhost = développement, tout autre domaine = production
+// Important : on ne se fie PAS au header Host envoyé par le visiteur (falsifiable),
+// on se base sur le système d'exploitation du serveur (XAMPP = Windows en dev,
+// hébergeur = Linux en production).
 $_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$_is_local = in_array(strtolower(explode(':', $_host)[0]), ['localhost', '127.0.0.1', '::1']);
+$_is_local = PHP_OS_FAMILY === 'Windows';
 
 if (!defined('ENVIRONMENT')) {
     define('ENVIRONMENT', $_is_local ? 'development' : 'production');
