@@ -930,33 +930,40 @@ function envoyerEmailSimple(string $destinataire, string $sujet, string $message
     // Essayer PHPMailer d'abord
     $phpmailerPath = __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
     if (file_exists($phpmailerPath)) {
-        try {
-            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
-            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
-            require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
-            
-            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
-            $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
-            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port       = 587;
-            $mail->CharSet    = 'UTF-8';
+        require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
+        require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+        require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
 
-            $mail->setFrom(defined('SMTP_EMAIL') ? SMTP_EMAIL : 'noreply@saveurkaolack.sn', 'Saveur Kaolack');
-            $mail->addAddress($destinataire);
-            $mail->Subject = $sujet;
-            $mail->Body = $messageHtml;
-            $mail->isHTML(true);
+        // Jusqu'à 2 tentatives : une coupure réseau/DNS ponctuelle vers Gmail
+        // ne doit pas faire échouer l'envoi si une seconde tentative passerait.
+        for ($tentative = 1; $tentative <= 2; $tentative++) {
+            try {
+                $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.gmail.com';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = defined('SMTP_EMAIL')    ? SMTP_EMAIL    : '';
+                $mail->Password   = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
+                $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = 587;
+                $mail->CharSet    = 'UTF-8';
 
-            return $mail->send();
-        } catch (PHPMailer\PHPMailer\Exception $e) {
-            error_log("Erreur envoi email simple : " . $e->getMessage());
+                $mail->setFrom(defined('SMTP_EMAIL') ? SMTP_EMAIL : 'noreply@saveurkaolack.sn', 'Saveur Kaolack');
+                $mail->addAddress($destinataire);
+                $mail->Subject = $sujet;
+                $mail->Body = $messageHtml;
+                $mail->isHTML(true);
+
+                return $mail->send();
+            } catch (PHPMailer\PHPMailer\Exception $e) {
+                error_log("Erreur envoi email simple (tentative {$tentative}) : " . $e->getMessage());
+                if ($tentative < 2) {
+                    usleep(500000); // 0.5s avant de réessayer
+                }
+            }
         }
     }
-    
+
     // Fallback mail()
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";

@@ -101,8 +101,7 @@ HTML;
                 if ($emailEnvoye) {
                     $succes = '✅ Email envoyé ! Vérifiez votre boîte de réception (et vos spams). Le lien est valable 1 heure.';
                 } else {
-                    $succes = '⚠️ La demande a été enregistrée mais l\'email n\'a pas pu être envoyé. <br><br>
-                    <strong>Cause probable :</strong> La configuration Gmail n\'est pas encore faite.';
+                    $erreur = "L'email n'a pas pu être envoyé pour le moment (souci de connexion temporaire). Veuillez réessayer dans quelques instants.";
                 }
             } else {
                 // Pour la sécurité, ne pas révéler si l'email existe ou pas
