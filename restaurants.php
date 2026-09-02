@@ -52,7 +52,7 @@ try {
     
 } catch (PDOException $e) {
     $restaurants = [];
-    $error = 'Erreur BDD: ' . $e->getMessage();
+    $error = messageErreurBDD($e, 'restaurants.php');
 }
 
 require_once 'includes/header.php';
@@ -102,16 +102,8 @@ require_once 'includes/header.php';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
         </div>
-        <h3 class="font-display text-xl font-bold text-red-800 mb-2">Problème de base de données</h3>
-        <p class="text-red-700 mb-4"><?php echo $error; ?></p>
-        <div class="bg-white rounded-xl p-4 text-left text-sm text-[hsl(25_15%_42%)]">
-            <p class="font-semibold mb-2">Solutions possibles :</p>
-            <ul class="list-disc list-inside space-y-1">
-                <li>Vérifiez que MySQL est démarré dans XAMPP</li>
-                <li><a href="database/install.php" class="text-[hsl(14_72%_46%)] hover:underline">Cliquez ici pour installer la base de données</a></li>
-                <li>Vérifiez les identifiants (root / mot de passe vide)</li>
-            </ul>
-        </div>
+        <h3 class="font-display text-xl font-bold text-red-800 mb-2">Un problème est survenu</h3>
+        <p class="text-red-700 mb-4"><?php echo htmlspecialchars($error); ?></p>
     </div>
     <?php else: ?>
     

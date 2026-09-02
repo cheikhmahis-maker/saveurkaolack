@@ -97,7 +97,7 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'modifier_plat.php');
 }
 
 $pageTitle = 'Modifier - ' . ($plat['nom'] ?? 'Plat');

@@ -78,7 +78,7 @@ try {
     $commandes_livrees  = array_filter($commandes, fn($c) => $c['statut'] === 'livree');
 
 } catch (PDOException $e) {
-    $erreur = 'Erreur de connexion : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'profil_client.php');
 }
 
 // Fonction pour le badge de statut

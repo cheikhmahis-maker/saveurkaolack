@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['avis_id'], $_POST['ac
 
                 $succes = $action === 'approuver' ? "Avis approuvé et publié." : "Avis rejeté.";
             } catch (PDOException $e) {
-                $erreur = "Erreur : " . $e->getMessage();
+                $erreur = messageErreurBDD($e, 'admin/avis.php action');
             }
         }
     }
@@ -92,7 +92,7 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur BDD : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'admin/avis.php');
 }
 
 $pageTitle = 'Gestion Avis';

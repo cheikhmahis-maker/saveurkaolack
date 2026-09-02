@@ -13,6 +13,7 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
+require_once '../includes/fonctions.php';
 
 $clients = [];
 $stats = ['total' => 0, 'nouveaux' => 0];
@@ -35,7 +36,7 @@ try {
     $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur BDD : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'admin/utilisateurs.php');
 }
 
 $pageTitle = 'Gestion Clients';

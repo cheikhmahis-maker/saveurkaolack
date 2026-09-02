@@ -97,7 +97,7 @@ try {
     unset($cmd); // Casser la référence
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'commandes.php');
 }
 
 $pageTitle = 'Mes commandes - ' . $restaurant['nom'];

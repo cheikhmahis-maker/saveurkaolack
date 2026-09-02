@@ -236,7 +236,7 @@ $jsonLdRestaurant = array_filter($jsonLdRestaurant, fn($v) => $v !== null);
                 </div>
                 <div class="text-center">
                     <div class="text-lg font-bold text-[hsl(20_30%_14%)]">
-                        <?php echo number_format($restaurant['commande_minimum'], 0, ',', "\xc2\xa0"); ?> F
+                        <?php echo number_format($restaurant['commande_minimum'], 0, ',', ' '); ?> F
                     </div>
                     <div class="text-xs text-[hsl(25_15%_42%)] mt-0.5">Minimum</div>
                 </div>

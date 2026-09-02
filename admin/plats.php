@@ -13,6 +13,7 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
+require_once '../includes/fonctions.php';
 
 $plats = [];
 $stats = ['total' => 0, 'disponible' => 0, 'populaire' => 0];
@@ -38,7 +39,7 @@ try {
     $plats = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur BDD : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'admin/plats.php');
 }
 
 $pageTitle = 'Gestion Plats';

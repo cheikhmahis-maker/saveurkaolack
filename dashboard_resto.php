@@ -117,7 +117,7 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'dashboard_resto.php');
 }
 
 $pageTitle = 'Tableau de bord - ' . ($restaurant['nom'] ?? 'Restaurant');

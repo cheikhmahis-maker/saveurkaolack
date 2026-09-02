@@ -103,7 +103,7 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'modifier_restaurant.php');
 }
 
 $pageTitle = 'Modifier - ' . $restaurant['nom'];

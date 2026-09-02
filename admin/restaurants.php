@@ -51,7 +51,7 @@ try {
     $restaurants = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur BDD : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'admin/restaurants.php');
 }
 
 $pageTitle = 'Gestion Restaurants';

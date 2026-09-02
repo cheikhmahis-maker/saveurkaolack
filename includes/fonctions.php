@@ -242,19 +242,6 @@ function afficherEtoiles(float $note, string $taille = 'md'): string {
 }
 
 /**
- * Formate un montant en FCFA
- * 
- * @param float|int $montant Montant en FCFA
- * @param bool $symbole Afficher le symbole FCFA
- * @return string Montant formaté (ex: "2 500 FCFA")
- */
-function formaterPrix(float|int $montant, bool $symbole = true): string {
-    $montant = max(0, $montant);
-    $formate = number_format($montant, 0, ',', ' '); // Espace comme séparateur de milliers
-    return $symbole ? $formate . ' FCFA' : $formate;
-}
-
-/**
  * Formate une date MySQL en français
  * 
  * @param string $date Date format MySQL (2024-03-15 14:30:00)
@@ -289,27 +276,21 @@ function formaterDate(string $date, bool $heure = true): string {
 }
 
 /**
- * Retourne un badge Bootstrap coloré selon le statut
- * 
- * @param string $statut Statut de commande
- * @return string HTML du badge Bootstrap
+ * Message d'erreur à afficher à l'utilisateur suite à une PDOException.
+ * Log toujours le détail technique ; n'affiche le détail que si DEBUG est actif
+ * (environnement local), sinon un message générique — pour ne jamais exposer
+ * de détails techniques (structure BDD, chemins serveur) à un visiteur.
+ *
+ * @param \Throwable $e Exception attrapée
+ * @param string $contexte Étiquette courte pour retrouver l'erreur dans les logs
+ * @return string Message sûr à afficher
  */
-function statutBadge(string $statut): string {
-    $statuts = [
-        'recue' => ['class' => 'bg-warning text-dark', 'label' => 'Reçue'],
-        'preparation' => ['class' => 'bg-info', 'label' => 'En préparation'],
-        'prete' => ['class' => 'bg-primary', 'label' => 'Prête'],
-        'livraison' => ['class' => 'bg-purple', 'label' => 'En livraison'],
-        'livree' => ['class' => 'bg-success', 'label' => 'Livrée'],
-        'annulee' => ['class' => 'bg-danger', 'label' => 'Annulée'],
-        'en_attente' => ['class' => 'bg-secondary', 'label' => 'En attente'],
-        'confirme' => ['class' => 'bg-success', 'label' => 'Confirmée'],
-    ];
-    
-    $statut = strtolower($statut);
-    $config = $statuts[$statut] ?? ['class' => 'bg-secondary', 'label' => ucfirst($statut)];
-    
-    return '<span class="badge ' . $config['class'] . '">' . $config['label'] . '</span>';
+function messageErreurBDD(\Throwable $e, string $contexte = 'Erreur'): string {
+    error_log($contexte . ': ' . $e->getMessage());
+    if (defined('DEBUG') && DEBUG) {
+        return $contexte . ' : ' . $e->getMessage();
+    }
+    return "Une erreur technique est survenue. Veuillez réessayer dans quelques instants.";
 }
 
 /**

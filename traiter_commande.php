@@ -47,9 +47,7 @@ if (empty($prenom) || empty($telephone) || empty($adresse)) {
     exit();
 }
 
-// Valider le numéro de téléphone : au moins 7 chiffres après suppression des séparateurs
-$chiffres_tel = preg_replace('/\D/', '', $telephone);
-if (strlen($chiffres_tel) < 7 || strlen($chiffres_tel) > 15) {
+if (!telephoneValide($telephone)) {
     $_SESSION['erreur_commande'] = "Le numéro de téléphone n'est pas valide. Exemple : 77 123 45 67";
     header('Location: checkout.php');
     exit();
@@ -76,13 +74,20 @@ function _envoyerNotificationsRestaurant(array $restaurant, string $prenom, stri
         return;
     }
     // Email au restaurant
-    envoyerEmailRestaurant($restaurant, $prenom, $telephone, $adresse, $quartier, $notes, $total, $mode_paiement, $numero_tracking, $items);
+    $email_ok = envoyerEmailRestaurant($restaurant, $prenom, $telephone, $adresse, $quartier, $notes, $total, $mode_paiement, $numero_tracking, $items);
 
     // Telegram — le token vient de config.php (TELEGRAM_BOT_TOKEN), seul le chat_id est par restaurant
     $chat_id = $restaurant['telegram_chat_id'] ?? '';
+    $telegram_ok = null;
     if (!empty($chat_id)) {
         $msg = buildMessageTelegram($restaurant['nom'] ?? '', $prenom, $telephone, $adresse, $quartier, $notes, $total, $mode_paiement, $numero_tracking, $items);
-        envoyerNotificationTelegram('', $chat_id, $msg); // '' → utilise TELEGRAM_BOT_TOKEN
+        $telegram_ok = envoyerNotificationTelegram('', $chat_id, $msg); // '' → utilise TELEGRAM_BOT_TOKEN
+    }
+
+    // Si aucun des deux canaux n'a fonctionné, le restaurant ne sera jamais averti :
+    // on le trace dans les logs pour pouvoir intervenir (SMTP/Telegram mal configuré, etc.)
+    if (!$email_ok && $telegram_ok !== true) {
+        error_log("ALERTE: aucune notification envoyée au restaurant #{$restaurant['id']} pour la commande {$numero_tracking}");
     }
 }
 
@@ -133,7 +138,7 @@ try {
 
     // Vérifier le minimum de commande côté serveur
     if ($commande_minimum > 0 && $total < $commande_minimum) {
-        $_SESSION['erreur_commande'] = "Le montant minimum de commande est de " . number_format($commande_minimum, 0, ',', "\xc2\xa0") . " FCFA.";
+        $_SESSION['erreur_commande'] = "Le montant minimum de commande est de " . number_format($commande_minimum, 0, ',', ' ') . " FCFA.";
         header('Location: checkout.php');
         exit();
     }

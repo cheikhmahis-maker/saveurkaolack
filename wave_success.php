@@ -71,8 +71,16 @@ try {
         exit();
     }
 
-    // Idempotence : ne pas retraiter une commande déjà confirmée
-    if ($commande['statut'] !== 'en_attente') {
+    // Idempotence : le passage 'en_attente' → 'confirmee' est fait en une seule requête
+    // atomique (WHERE statut = 'en_attente'). Si deux appels arrivent en même temps
+    // (double redirection Wave, retour arrière du navigateur), un seul des deux gagne
+    // la course et envoie les notifications — l'autre voit 0 ligne modifiée.
+    $stmt_confirm = $pdo->prepare("UPDATE commandes SET statut = 'confirmee' WHERE numero_tracking = ? AND statut = 'en_attente'");
+    $stmt_confirm->execute([$numero_tracking]);
+    $commande_vient_detre_confirmee = $stmt_confirm->rowCount() > 0;
+
+    if (!$commande_vient_detre_confirmee) {
+        // Déjà confirmée par un appel précédent : ne pas renvoyer les notifications
         $_SESSION['dernier_numero_tracking']   = $numero_tracking;
         $_SESSION['derniere_commande_id']      = $commande['id'];
         $_SESSION['email_confirmation_envoye'] = false;
@@ -80,10 +88,6 @@ try {
         header('Location: confirmation.php');
         exit();
     }
-
-    // Confirmer la commande
-    $pdo->prepare("UPDATE commandes SET statut = 'confirmee' WHERE numero_tracking = ?")
-        ->execute([$numero_tracking]);
 
     // Récupérer infos client depuis client_info
     $client_info  = json_decode($commande['client_info'] ?? '{}', true);
@@ -122,11 +126,15 @@ try {
     );
 
     // Notifier le restaurant (email + Telegram) — paiement Wave confirmé
-    envoyerEmailRestaurant($restaurant_row, $prenom, $telephone, $adresse, $quartier, $notes, (float) $commande['total'], 'wave', $numero_tracking, $items_email);
+    $email_resto_ok = envoyerEmailRestaurant($restaurant_row, $prenom, $telephone, $adresse, $quartier, $notes, (float) $commande['total'], 'wave', $numero_tracking, $items_email);
     $chat_id = $restaurant_row['telegram_chat_id'] ?? '';
+    $telegram_ok = null;
     if (!empty($chat_id)) {
         $msg = buildMessageTelegram($restaurant_nom, $prenom, $telephone, $adresse, $quartier, $notes, (float) $commande['total'], 'wave', $numero_tracking, $items_email);
-        envoyerNotificationTelegram('', $chat_id, $msg);
+        $telegram_ok = envoyerNotificationTelegram('', $chat_id, $msg);
+    }
+    if (!$email_resto_ok && $telegram_ok !== true) {
+        error_log("ALERTE: aucune notification envoyée au restaurant #{$restaurant_row['id']} pour la commande Wave {$numero_tracking}");
     }
 
     $_SESSION['cart']                        = [];

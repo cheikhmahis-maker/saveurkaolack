@@ -126,7 +126,7 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur BDD : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'admin/index.php');
 }
 
 $pageTitle = 'Dashboard Admin';

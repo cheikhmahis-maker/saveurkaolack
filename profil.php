@@ -56,36 +56,35 @@ try {
                 $erreur = "Le numéro de téléphone n'est pas valide. Exemple : +221 77 123 45 67";
             } else {
 
-            // Gérer l'upload de la photo bannière
+            // Gérer l'upload de la photo bannière (redimensionnée/compressée, comme les photos de plats)
             $photo_banniere = $restaurant['photo_banniere'] ?? null;
             if (!empty($_FILES['photo_banniere']['tmp_name']) && $_FILES['photo_banniere']['error'] === 0) {
-                $upload_dir = 'uploads/restaurants/';
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0755, true);
+                $resultat = uploadImageSecurise($_FILES['photo_banniere'], BANNIERES_PATH, 1600, 900, 2097152);
+                if ($resultat['success']) {
+                    if ($photo_banniere && file_exists(BANNIERES_PATH . $photo_banniere)) {
+                        unlink(BANNIERES_PATH . $photo_banniere);
+                    }
+                    $photo_banniere = $resultat['filename'];
+                } else {
+                    $erreur = "Erreur upload bannière : " . $resultat['error'];
                 }
-                // Supprimer l'ancienne photo si existe
-                if ($photo_banniere && file_exists($upload_dir . $photo_banniere)) {
-                    unlink($upload_dir . $photo_banniere);
-                }
-                $ext = pathinfo($_FILES['photo_banniere']['name'], PATHINFO_EXTENSION);
-                $photo_banniere = 'banner_' . $restaurant_id . '_' . uniqid() . '.' . $ext;
-                move_uploaded_file($_FILES['photo_banniere']['tmp_name'], $upload_dir . $photo_banniere);
             }
-            
-            // Gérer l'upload du logo
+
+            // Gérer l'upload du logo (redimensionné/compressé)
             $photo_logo = $restaurant['logo'] ?? null;
-            if (!empty($_FILES['photo_logo']['tmp_name']) && $_FILES['photo_logo']['error'] === 0) {
-                $upload_dir = 'uploads/restaurants/';
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0755, true);
+            if (empty($erreur) && !empty($_FILES['photo_logo']['tmp_name']) && $_FILES['photo_logo']['error'] === 0) {
+                $resultat = uploadImageSecurise($_FILES['photo_logo'], LOGOS_PATH, 500, 500, 2097152);
+                if ($resultat['success']) {
+                    if ($photo_logo && file_exists(LOGOS_PATH . $photo_logo)) {
+                        unlink(LOGOS_PATH . $photo_logo);
+                    }
+                    $photo_logo = $resultat['filename'];
+                } else {
+                    $erreur = "Erreur upload logo : " . $resultat['error'];
                 }
-                if ($photo_logo && file_exists($upload_dir . $photo_logo)) {
-                    unlink($upload_dir . $photo_logo);
-                }
-                $ext = pathinfo($_FILES['photo_logo']['name'], PATHINFO_EXTENSION);
-                $photo_logo = 'logo_' . $restaurant_id . '_' . uniqid() . '.' . $ext;
-                move_uploaded_file($_FILES['photo_logo']['tmp_name'], $upload_dir . $photo_logo);
             }
+
+            if (empty($erreur)) {
             
             // Mettre à jour les infos
             $stmt = $pdo->prepare("UPDATE restaurants SET 
@@ -109,11 +108,12 @@ try {
             $restaurant = $stmt->fetch(PDO::FETCH_ASSOC);
             }
             }
+            }
         }
     }
-    
+
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'profil.php');
 }
 
 $pageTitle = 'Mon Profil - Paramètres du restaurant';
@@ -153,7 +153,7 @@ require_once 'includes/header.php';
                     <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-2">Photo de bannière</label>
                     <div class="mb-3 rounded-xl overflow-hidden bg-gray-100 aspect-video">
                         <?php if (!empty($restaurant['photo_banniere'])): ?>
-                        <img src="uploads/restaurants/<?php echo $restaurant['photo_banniere']; ?>" alt="Bannière" class="w-full h-full object-cover">
+                        <?php echo afficherBanniere($restaurant['photo_banniere'], 'Bannière', 'w-full h-full object-cover'); ?>
                         <?php else: ?>
                         <div class="h-full flex items-center justify-center text-gray-400">
                             <div class="text-center">
@@ -174,7 +174,7 @@ require_once 'includes/header.php';
                     <label class="block text-sm font-medium text-[hsl(20_30%_14%)] mb-2">Logo du restaurant</label>
                     <div class="mb-3 rounded-xl overflow-hidden bg-gray-100 aspect-square max-w-[200px]">
                         <?php if (!empty($restaurant['logo'])): ?>
-                        <img src="uploads/restaurants/<?php echo $restaurant['logo']; ?>" alt="Logo" class="w-full h-full object-cover">
+                        <?php echo afficherLogo($restaurant['logo'], 'Logo', 'w-full h-full object-cover'); ?>
                         <?php else: ?>
                         <div class="h-full flex items-center justify-center text-gray-400">
                             <div class="text-center">

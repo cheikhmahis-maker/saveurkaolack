@@ -154,7 +154,7 @@ try {
     }
     
 } catch (PDOException $e) {
-    $erreur = 'Erreur : ' . $e->getMessage();
+    $erreur = messageErreurBDD($e, 'mes_plats.php');
 }
 
 $pageTitle = 'Mes Plats - Gestion du menu';

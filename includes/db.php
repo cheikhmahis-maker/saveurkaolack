@@ -47,6 +47,35 @@ function getDB(): PDO {
 }
 
 /**
+ * Crée les index manquants utilisés par les pages les plus visitées
+ * (fiches restaurant, listes filtrées, tableau de bord). Sans effet si
+ * les index existent déjà. Non bloquant : une erreur ici ne doit jamais
+ * empêcher le site de fonctionner.
+ */
+function assurerIndexPerformance(PDO $pdo): void {
+    $index = [
+        'avis'        => ['idx_avis_restaurant'        => 'restaurant_id',  'idx_avis_utilisateur'       => 'utilisateur_id'],
+        'restaurants' => ['idx_restaurants_statut'      => 'statut'],
+        'plats'       => ['idx_plats_disponible'        => 'disponible'],
+        'commandes'   => ['idx_commandes_created'        => 'created_at',
+                           'idx_commandes_resto_created' => '`restaurant_id`, `created_at`'],
+    ];
+    try {
+        foreach ($index as $table => $cles) {
+            foreach ($cles as $nomIndex => $colonnes) {
+                $existe = $pdo->query("SHOW INDEX FROM `$table` WHERE Key_name = '$nomIndex'")->fetchAll();
+                if (empty($existe)) {
+                    $pdo->exec("ALTER TABLE `$table` ADD INDEX `$nomIndex` ($colonnes)");
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        // Non bloquant — table ou colonne peut-être absente sur une ancienne installation
+    }
+}
+assurerIndexPerformance($pdo);
+
+/**
  * Vérifier si la connexion est active
  * @return bool
  */
