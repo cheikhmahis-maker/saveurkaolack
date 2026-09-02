@@ -32,8 +32,8 @@
                 <div class="mb-3 text-sm font-semibold text-[hsl(20_30%_14%)]">Contact</div>
                 <ul class="space-y-2 text-sm text-[hsl(25_15%_42%)]">
                     <li>Kaolack, Sénégal</li>
-                    <li>+221 78 521 65 68</li>
-                    <li><?php echo SITE_EMAIL; ?></li>
+                    <li><a href="tel:<?php echo htmlspecialchars(formatTelLien(SITE_TEL)); ?>" class="hover:text-[hsl(20_30%_14%)] transition-colors"><?php echo htmlspecialchars(SITE_TEL); ?></a></li>
+                    <li><a href="mailto:<?php echo htmlspecialchars(SITE_EMAIL); ?>" class="hover:text-[hsl(20_30%_14%)] transition-colors"><?php echo htmlspecialchars(SITE_EMAIL); ?></a></li>
                 </ul>
             </div>
         </div>

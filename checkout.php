@@ -9,6 +9,7 @@ require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Finaliser la commande';
+$pageNoIndex = true;
 
 // Démarrer la session
 if (session_status() === PHP_SESSION_NONE) {

@@ -4,6 +4,7 @@ require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Plats';
+$pageDescription = 'Parcourez tous les plats disponibles à Kaolack, filtrez par catégorie et commandez en ligne auprès du restaurant de votre choix.';
 
 // Initialiser les variables par défaut
 $activeCategory = isset($_GET['cat']) ? $_GET['cat'] : 'Tout';
@@ -97,7 +98,7 @@ require_once 'includes/header.php';
                     <div class="font-display text-lg font-bold text-[hsl(14_72%_46%)]">
                         <?php echo number_format($d['prix'], 0, ',', ' '); ?> F
                     </div>
-                    <a href="panier.php?add=<?php echo $d['id']; ?>" class="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] text-[hsl(38_60%_97%)] shadow-warm hover:bg-[hsl(14_72%_40%)] transition-colors">
+                    <a href="panier.php?add=<?php echo $d['id']; ?>" aria-label="Ajouter <?php echo htmlspecialchars($d['nom']); ?> au panier" class="h-9 w-9 inline-flex items-center justify-center rounded-xl bg-[hsl(14_72%_46%)] text-[hsl(38_60%_97%)] shadow-warm hover:bg-[hsl(14_72%_40%)] transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>

@@ -25,6 +25,7 @@ if (!empty($_SESSION['dernier_numero_tracking'])) {
 
 // Nettoyer la session (mais garder le numéro pour cette page)
 $pageTitle = 'Commande Confirmée - Saveur Kaolack';
+$pageNoIndex = true;
 
 // Récupérer le statut de l'email
 $email_envoye = $_SESSION['email_confirmation_envoye'] ?? false;

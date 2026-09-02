@@ -49,6 +49,10 @@ $metaUrlActuelle = $metaProtocole . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost
     <title><?php echo htmlspecialchars($metaTitre); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($metaDescription); ?>">
     <link rel="canonical" href="<?php echo htmlspecialchars($metaUrlActuelle); ?>">
+    <?php if (!empty($pageNoIndex)): ?>
+    <meta name="robots" content="noindex, nofollow">
+    <?php endif; ?>
+    <link rel="icon" href="<?php echo BASE_URL; ?>favicon.svg" type="image/svg+xml">
 
     <!-- Partage réseaux sociaux (WhatsApp, Facebook, etc.) -->
     <meta property="og:type" content="website">

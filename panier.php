@@ -9,6 +9,7 @@ require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Mon Panier';
+$pageNoIndex = true;
 
 // Démarrer la session
 if (session_status() === PHP_SESSION_NONE) {
@@ -291,20 +292,23 @@ if (!empty($_SESSION['erreur_commande'])) {
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="?update=<?php echo $platId; ?>&qty=<?php echo $item['quantite'] - 1; ?>" 
+                    <a href="?update=<?php echo $platId; ?>&qty=<?php echo $item['quantite'] - 1; ?>"
+                       aria-label="Diminuer la quantité"
                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-[hsl(30_25%_86%)] hover:bg-[hsl(36_30%_92%)] transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                         </svg>
                     </a>
                     <span class="w-6 text-center font-semibold"><?php echo $item['quantite']; ?></span>
-                    <a href="?update=<?php echo $platId; ?>&qty=<?php echo $item['quantite'] + 1; ?>" 
+                    <a href="?update=<?php echo $platId; ?>&qty=<?php echo $item['quantite'] + 1; ?>"
+                       aria-label="Augmenter la quantité"
                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-[hsl(30_25%_86%)] hover:bg-[hsl(36_30%_92%)] transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                     </a>
-                    <a href="?remove=<?php echo $platId; ?>" 
+                    <a href="?remove=<?php echo $platId; ?>"
+                       aria-label="Supprimer cet article"
                        class="ml-1 h-8 w-8 inline-flex items-center justify-center rounded-lg text-[hsl(0_75%_48%)] hover:bg-[hsl(0_75%_48%)]/10 transition-colors"
                        onclick="return confirm('Supprimer cet article ?')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -101,6 +101,7 @@ try {
 }
 
 $pageTitle = 'Mes commandes - ' . $restaurant['nom'];
+$pageNoIndex = true;
 require_once 'includes/header.php';
 ?>
 

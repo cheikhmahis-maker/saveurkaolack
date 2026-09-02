@@ -13,6 +13,7 @@ require_once 'includes/fonctions.php';
 require_once 'includes/geo.php';
 
 $pageTitle = 'Suivi de commande';
+$pageNoIndex = true;
 
 // Récupérer le numéro de tracking (depuis URL ou cookie)
 $token = isset($_GET['token']) ? trim($_GET['token']) : (isset($_GET['code']) ? trim($_GET['code']) : '');

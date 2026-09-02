@@ -31,6 +31,7 @@ if (!empty($_SESSION['id'])) {
 }
 
 $pageTitle = 'Connexion';
+$pageNoIndex = true;
 $erreur = '';
 $succes = '';
 

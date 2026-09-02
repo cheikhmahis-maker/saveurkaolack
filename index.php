@@ -14,6 +14,7 @@ require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Accueil';
+$pageDescription = 'Commandez vos plats sénégalais préférés à Kaolack : thiéboudienne, yassa, mafé et plus, livrés depuis les restaurants et cuisines locales de la ville.';
 
 // Récupérer données depuis la BDD
 try {
@@ -142,9 +143,10 @@ require_once 'includes/header.php';
         <div class="relative">
             <div class="absolute -left-6 -top-6 h-32 w-32 rounded-full bg-[hsl(38_92%_52%)]/30 blur-3xl"></div>
             <div class="absolute -bottom-8 -right-4 h-40 w-40 rounded-full bg-[hsl(14_72%_46%)]/20 blur-3xl"></div>
-            <div class="relative overflow-hidden rounded-[2rem] shadow-warm">
-                <img src="<?php echo UPLOADS_URL; ?>hero.jpg" 
-                     alt="Burger gourmet" 
+            <div class="relative overflow-hidden rounded-[2rem] shadow-warm aspect-[4/3]">
+                <img src="<?php echo UPLOADS_URL; ?>hero.jpg"
+                     alt="Burger gourmet"
+                     width="800" height="600"
                      class="h-full w-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-[hsl(20_30%_14%)]/40 via-transparent to-transparent"></div>
                 <div class="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-3 text-[hsl(38_60%_97%)]">

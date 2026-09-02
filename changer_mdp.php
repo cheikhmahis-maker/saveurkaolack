@@ -68,8 +68,8 @@ try {
             $erreur = "Vous n'avez rien modifié.";
         } elseif ($emailChange && !filter_var($nouvel_email, FILTER_VALIDATE_EMAIL)) {
             $erreur = "L'adresse email n'est pas valide.";
-        } elseif ($mdpChange && strlen($nouveau_mdp) < 6) {
-            $erreur = "Le nouveau mot de passe doit faire au moins 6 caractères.";
+        } elseif ($mdpChange && strlen($nouveau_mdp) < 8) {
+            $erreur = "Le nouveau mot de passe doit faire au moins 8 caractères.";
         } elseif ($mdpChange && $nouveau_mdp !== $confirmation_mdp) {
             $erreur = "La confirmation ne correspond pas au nouveau mot de passe.";
         } else {
@@ -80,7 +80,7 @@ try {
 
             if (!$user) {
                 $erreur = "Utilisateur non trouvé.";
-            } elseif (!password_verify($ancien_mdp, $user['password']) && $ancien_mdp !== $user['password']) {
+            } elseif (!password_verify($ancien_mdp, $user['password'])) {
                 $erreur = "Le mot de passe actuel est incorrect.";
             } elseif ($emailChange && (function () use ($pdo, $nouvel_email, $user_id, $table) {
                 $stmt = $pdo->prepare("SELECT id FROM {$table} WHERE email = ? AND id != ? LIMIT 1");

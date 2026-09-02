@@ -96,6 +96,7 @@ function getStatutBadge($statut) {
 
 
 $pageTitle = 'Mon Profil - Mes Commandes';
+$pageNoIndex = true;
 require_once 'includes/header.php';
 ?>
 

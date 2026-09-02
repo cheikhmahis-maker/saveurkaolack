@@ -9,6 +9,7 @@ require_once 'includes/db.php';
 require_once 'includes/fonctions.php';
 
 $pageTitle = 'Restaurants';
+$pageDescription = 'Tous les restaurants partenaires de Kaolack sur un seul site : découvrez leurs menus et commandez en ligne pour une livraison rapide.';
 
 // Connexion BDD et récupération des restaurants
 try {

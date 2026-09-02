@@ -13,6 +13,7 @@ if (empty($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
+require_once '../includes/fonctions.php';
 
 $commandes = [];
 $stats = ['total' => 0, 'en_attente' => 0, 'livree' => 0, 'annulee' => 0];
