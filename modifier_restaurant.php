@@ -57,6 +57,8 @@ try {
 
         if (!telephoneValide($telephone)) {
             $erreur = "Le numéro de téléphone n'est pas valide. Exemple : +221 77 123 45 67";
+        } elseif (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $erreur = "L'adresse email n'est pas valide. C'est cette adresse qui reçoit vos notifications de commande.";
         } else {
 
         // Construire la requête UPDATE de façon flexible selon ce qui est renseigné

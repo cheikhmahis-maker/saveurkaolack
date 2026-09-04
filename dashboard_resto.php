@@ -209,6 +209,24 @@ require_once 'includes/header.php';
             </div>
             <?php endif; ?>
 
+            <?php
+            $emailNotifOk = !empty($restaurant['email']) && filter_var($restaurant['email'], FILTER_VALIDATE_EMAIL);
+            $telegramOk   = !empty($restaurant['telegram_chat_id']);
+            if ($restaurant && !$emailNotifOk && !$telegramOk):
+            ?>
+            <div class="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+                <span class="text-xl shrink-0">⚠️</span>
+                <div>
+                    <div class="font-semibold">Vous ne recevrez aucune alerte de nouvelle commande</div>
+                    <p class="text-sm mt-1">
+                        Votre email de contact n'est pas valide et Telegram n'est pas configuré : vous ne serez prévenu par aucun moyen quand un client commande.
+                        <a href="profil.php" class="font-medium underline">Corrigez votre email</a> ou
+                        <a href="modifier_restaurant.php#wave" class="font-medium underline">configurez Telegram</a>.
+                    </p>
+                </div>
+            </div>
+            <?php endif; ?>
+
     <?php if ($restaurant): ?>
     <!-- Statistiques -->
     <div class="mb-8 grid gap-4 sm:grid-cols-3">
