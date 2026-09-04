@@ -118,6 +118,11 @@ require_once 'includes/header.php';
     <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700"><?php echo $erreur; ?></div>
     <?php endif; ?>
 
+    <button id="notif-nouvelle-commande" type="button" hidden
+            class="mb-4 w-full flex items-center justify-center gap-2 rounded-xl bg-[hsl(14_72%_46%)] px-4 py-3 text-sm font-semibold text-white shadow-warm animate-pulse">
+        🔔 <span id="notif-nouvelle-commande-texte">Nouvelle commande reçue</span> — cliquez pour actualiser
+    </button>
+
     <?php if (!empty($commandes)): ?>
     <div class="space-y-4">
         <?php foreach ($commandes as $cmd): ?>
@@ -367,5 +372,59 @@ require_once 'includes/header.php';
     </div>
     <?php endif; ?>
 </section>
+
+<script>
+(function () {
+    // Prévient le restaurant d'une nouvelle commande même en restant sur cette page
+    // (le son + badge du tableau de bord ne se déclenche que sur dashboard_resto.php).
+    const bouton = document.getElementById('notif-nouvelle-commande');
+    const texte  = document.getElementById('notif-nouvelle-commande-texte');
+    if (!bouton) return;
+
+    let lastCheck = Math.floor(Date.now() / 1000);
+
+    function jouerSon() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [0, 0.15, 0.30].forEach(function(delai) {
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.4, ctx.currentTime + delai);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delai + 0.25);
+                osc.start(ctx.currentTime + delai);
+                osc.stop(ctx.currentTime + delai + 0.25);
+            });
+        } catch (e) { /* Navigateur sans Web Audio */ }
+    }
+
+    function verifier() {
+        fetch('ajax/check_nouvelles_commandes.php?depuis=' + lastCheck)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.nouvelles && data.nouvelles > 0) {
+                    jouerSon();
+                    texte.textContent = data.nouvelles > 1
+                        ? data.nouvelles + ' nouvelles commandes reçues'
+                        : 'Nouvelle commande reçue';
+                    bouton.hidden = false;
+                }
+                if (data.timestamp) {
+                    lastCheck = data.timestamp;
+                }
+            })
+            .catch(function () { /* silencieux */ });
+    }
+
+    bouton.addEventListener('click', function () {
+        window.location.reload();
+    });
+
+    setInterval(verifier, 30000);
+})();
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
